@@ -74,25 +74,29 @@ export default function AdminPage() {
         const worksheet = workbook.Sheets[sheetName];
         const data = XLSX.utils.sheet_to_json(worksheet);
 
-        if (!data.every(row => row.Name && row['Roll Number'])) {
-          throw new Error('Excel file must contain "Name" and "Roll Number" columns');
+        if (!data.every(row => row.Name && row['Roll Number'] && row.Panel)) {
+          throw new Error('Excel file must contain "Name", "Roll Number", and "Panel" columns');
         }
 
         const baseUrl = window.location.origin;
         const results = [];
 
-        for (let i = 0; i < data.length; i++) {
-          const panelNumber = ((i % 4) + 1).toString();
+        for (const row of data) {
+          if (!['1', '2', '3', '4'].includes(row.Panel.toString())) {
+            throw new Error(`Invalid panel number ${row.Panel}. Panel must be 1, 2, 3, or 4`);
+          }
+
           const userId = await handleCreateUser({
-            name: data[i].Name,
-            rollNumber: data[i]['Roll Number'],
-            email: data[i].Email || '',
-            panel: panelNumber
+            name: row.Name,
+            rollNumber: row['Roll Number'],
+            email: row.Email || '',
+            panel: row.Panel.toString()
           });
+
           results.push({
-            Name: data[i].Name,
-            'Roll Number': data[i]['Roll Number'],
-            Email: data[i].Email || '',
+            Name: row.Name,
+            'Roll Number': row['Roll Number'],
+            Email: row.Email || '',
             Link: `${baseUrl}/schedule/${userId}`
           });
         }
