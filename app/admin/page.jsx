@@ -1,4 +1,3 @@
-// app/admin/page.jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -19,6 +18,12 @@ export default function AdminPage() {
   const [importLoading, setImportLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  
+  // New state variables for form
+  const [name, setName] = useState('');
+  const [rollNumber, setRollNumber] = useState('');
+  const [panel, setPanel] = useState('');
+  const [generatedLink, setGeneratedLink] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -37,6 +42,28 @@ export default function AdminPage() {
       setErrorMessage('Failed to load users');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const userId = await handleCreateUser({
+        name,
+        rollNumber,
+        panel,
+        email: ''
+      });
+      const link = `${window.location.origin}/schedule/${userId}`;
+      setGeneratedLink(link);
+      await fetchUsers();
+      
+      // Reset form
+      setName('');
+      setRollNumber('');
+      setPanel('');
+    } catch (error) {
+      setErrorMessage('Failed to create user');
     }
   };
 
@@ -181,7 +208,7 @@ export default function AdminPage() {
           <CardTitle className="text-2xl text-purple-600">Create Interview Slot</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCreateUser} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
             <div>
               <Label htmlFor="name">Name</Label>
               <Input
@@ -214,11 +241,6 @@ export default function AdminPage() {
                 </SelectContent>
               </Select>
             </div>
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
             <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
               Generate Interview Link
             </Button>
