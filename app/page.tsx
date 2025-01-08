@@ -8,12 +8,12 @@ export default function HomePage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center text-purple-600">
-            COSC JD Recruitment 2025 Interview Scheduler
+            COSC interview scheduler
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            We will remove the admin panel after adding all the candidates' data
+            We will remove the admin panel after generating links
           </p>
           <div className="flex justify-center">
             <Link href="/admin">
