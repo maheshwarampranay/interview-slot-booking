@@ -11,10 +11,10 @@ import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { CalendarIcon, Clock, MessageCircle } from 'lucide-react';
 
 const WHATSAPP_GROUPS = {
-    '1': 'https://chat.whatsapp.com/panel1link',
-    '2': 'https://chat.whatsapp.com/panel2link',
-    '3': 'https://chat.whatsapp.com/panel3link',
-    '4': 'https://chat.whatsapp.com/panel4link',
+    '1': 'https://chat.whatsapp.com/E2L5kn6IJ9SEuysmp6GyKv',
+    '2': 'https://chat.whatsapp.com/CGb5zQI16FtJ0mU1dN6b3r',
+    '3': 'https://chat.whatsapp.com/Kjdt1ponnoO6RdqMQ7Y639',
+    '4': 'https://chat.whatsapp.com/JKdr7TRZsUFHiQKXWWSg95',
   };
 
 export default function SchedulePage() {

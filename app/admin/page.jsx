@@ -144,6 +144,7 @@ export default function AdminPage() {
     const exportData = users.map(user => ({
       Name: user.name,
       'Roll Number': user.rollNumber,
+      Panel: user.panel,
       Email: user.email || '',
       Link: `${window.location.origin}/schedule/${user.id}`
     }));
