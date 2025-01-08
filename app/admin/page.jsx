@@ -8,21 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db } from '@/utils/firebase';
 import * as XLSX from 'xlsx';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminPage() {
-  const [name, setName] = useState('');
-  const [rollNumber, setRollNumber] = useState('');
-  const [panel, setPanel] = useState('');
-  const [generatedLink, setGeneratedLink] = useState('');
-  const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [importLoading, setImportLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -38,7 +33,7 @@ export default function AdminPage() {
       });
       setUsers(usersData);
     } catch (error) {
-      setError('Failed to load users');
+      setErrorMessage('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -55,12 +50,12 @@ export default function AdminPage() {
 
   const handleFileSelect = (e) => {
     setSelectedFile(e.target.files[0]);
-    setError('');
+    setErrorMessage('');
   };
 
   const handleImport = async () => {
     if (!selectedFile) {
-      setError('Please select a file first');
+      setErrorMessage('Please select a file first');
       return;
     }
 
@@ -106,7 +101,7 @@ export default function AdminPage() {
         const fileInput = document.getElementById('excel-upload');
         if (fileInput) fileInput.value = '';
       } catch (error) {
-        setError(error.message || 'Error processing Excel file');
+        setErrorMessage(error.message || 'Error processing Excel file');
       } finally {
         setImportLoading(false);
       }
@@ -172,9 +167,9 @@ export default function AdminPage() {
               </Button>
             </div>
           </div>
-          {error && (
+          {errorMessage && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
         </CardContent>
