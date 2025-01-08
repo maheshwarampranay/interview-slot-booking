@@ -18,8 +18,6 @@ export default function AdminPage() {
   const [importLoading, setImportLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  
-  // New state variables for form
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [panel, setPanel] = useState('');
@@ -38,42 +36,24 @@ export default function AdminPage() {
         usersData.push({ id: doc.id, ...doc.data() });
       });
       setUsers(usersData);
-    } catch (error) {
+    } catch {
       setErrorMessage('Failed to load users');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const userId = await handleCreateUser({
-        name,
-        rollNumber,
-        panel,
-        email: ''
-      });
-      const link = `${window.location.origin}/schedule/${userId}`;
-      setGeneratedLink(link);
-      await fetchUsers();
-      
-      // Reset form
-      setName('');
-      setRollNumber('');
-      setPanel('');
-    } catch (error) {
-      setErrorMessage('Failed to create user');
-    }
-  };
-
   const handleCreateUser = async (userData) => {
-    const userRef = await addDoc(collection(db, 'users'), {
-      ...userData,
-      createdAt: new Date(),
-      hasScheduled: false
-    });
-    return userRef.id;
+    try {
+      const userRef = await addDoc(collection(db, 'users'), {
+        ...userData,
+        createdAt: new Date(),
+        hasScheduled: false
+      });
+      return userRef.id;
+    } catch {
+      throw new Error('Failed to create user');
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -128,14 +108,36 @@ export default function AdminPage() {
         setSelectedFile(null);
         const fileInput = document.getElementById('excel-upload');
         if (fileInput) fileInput.value = '';
-      } catch (error) {
-        setErrorMessage(error.message || 'Error processing Excel file');
+      } catch (importError) {
+        setErrorMessage(importError.message || 'Error processing Excel file');
       } finally {
         setImportLoading(false);
       }
     };
 
     reader.readAsArrayBuffer(selectedFile);
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const userId = await handleCreateUser({
+        name,
+        rollNumber,
+        panel,
+        email: ''
+      });
+      const link = `${window.location.origin}/schedule/${userId}`;
+      setGeneratedLink(link);
+      await fetchUsers();
+      
+      setName('');
+      setRollNumber('');
+      setPanel('');
+      setErrorMessage('');
+    } catch (submitError) {
+      setErrorMessage(submitError.message);
+    }
   };
 
   const handleExport = () => {
