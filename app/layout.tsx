@@ -6,8 +6,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Interview Scheduler',
-  description: 'Schedule your interview time slots',
+  title: 'COSC Interview Scheduler',
+  description: 'JD recruitment 2025',
 };
 
 interface RootLayoutProps {
