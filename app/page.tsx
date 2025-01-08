@@ -8,12 +8,12 @@ export default function HomePage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center text-purple-600">
-            Welcome to Interview Scheduler
+            COSC JD Recruitment 2025 Interview Scheduler
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            Please use your provided interview link to schedule your slot, or log in as an administrator to manage schedules.
+            We will remove the admin panel after adding all the candidates' data
           </p>
           <div className="flex justify-center">
             <Link href="/admin">
