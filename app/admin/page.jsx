@@ -1,7 +1,7 @@
 // app/admin/page.jsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db } from '@/utils/firebase';
+import * as XLSX from 'xlsx';
+import { Loader2 } from 'lucide-react';
 
 export default function AdminPage() {
   const [name, setName] = useState('');
@@ -19,6 +21,8 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [importLoading, setImportLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -33,48 +37,145 @@ export default function AdminPage() {
         usersData.push({ id: doc.id, ...doc.data() });
       });
       setUsers(usersData);
-      setLoading(false);
     } catch (error) {
-      console.error('Error fetching users:', error);
       setError('Failed to load users');
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    setError('');
-    setGeneratedLink('');
+  const handleCreateUser = async (userData) => {
+    const userRef = await addDoc(collection(db, 'users'), {
+      ...userData,
+      createdAt: new Date(),
+      hasScheduled: false
+    });
+    return userRef.id;
+  };
 
-    if (!name.trim() || !rollNumber.trim() || !panel) {
-      setError('Please fill in all fields including panel number');
+  const handleFileSelect = (e) => {
+    setSelectedFile(e.target.files[0]);
+    setError('');
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) {
+      setError('Please select a file first');
       return;
     }
 
-    try {
-      const userRef = await addDoc(collection(db, 'users'), {
-        name,
-        rollNumber,
-        panel,
-        createdAt: new Date(),
-        hasScheduled: false
-      });
+    setImportLoading(true);
+    const reader = new FileReader();
 
-      const baseUrl = window.location.origin;
-      const scheduleLink = `${baseUrl}/schedule/${userRef.id}`;
-      setGeneratedLink(scheduleLink);
-      setName('');
-      setRollNumber('');
-      setPanel('');
-      await fetchUsers();
-    } catch (error) {
-      console.error('Error creating user:', error);
-      setError('Failed to create user');
-    }
+    reader.onload = async (event) => {
+      try {
+        const workbook = XLSX.read(event.target.result, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(worksheet);
+
+        if (!data.every(row => row.Name && row['Roll Number'])) {
+          throw new Error('Excel file must contain "Name" and "Roll Number" columns');
+        }
+
+        const baseUrl = window.location.origin;
+        const results = [];
+
+        for (let i = 0; i < data.length; i++) {
+          const panelNumber = ((i % 4) + 1).toString();
+          const userId = await handleCreateUser({
+            name: data[i].Name,
+            rollNumber: data[i]['Roll Number'],
+            email: data[i].Email || '',
+            panel: panelNumber
+          });
+          results.push({
+            Name: data[i].Name,
+            'Roll Number': data[i]['Roll Number'],
+            Email: data[i].Email || '',
+            Link: `${baseUrl}/schedule/${userId}`
+          });
+        }
+
+        await fetchUsers();
+        setSelectedFile(null);
+        const fileInput = document.getElementById('excel-upload');
+        if (fileInput) fileInput.value = '';
+      } catch (error) {
+        setError(error.message || 'Error processing Excel file');
+      } finally {
+        setImportLoading(false);
+      }
+    };
+
+    reader.readAsArrayBuffer(selectedFile);
+  };
+
+  const handleExport = () => {
+    const exportData = users.map(user => ({
+      Name: user.name,
+      'Roll Number': user.rollNumber,
+      Email: user.email || '',
+      Link: `${window.location.origin}/schedule/${user.id}`
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Candidates');
+    XLSX.writeFile(wb, 'candidates_with_links.xlsx');
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl text-purple-600">Import/Export Candidates</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="excel-upload">Import Excel</Label>
+              <Input
+                id="excel-upload"
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileSelect}
+                className="mt-2"
+                disabled={importLoading}
+              />
+            </div>
+            <div className="flex space-x-4">
+              <Button 
+                onClick={handleImport} 
+                disabled={!selectedFile || importLoading}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {importLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  'Start Import'
+                )}
+              </Button>
+              <Button 
+                onClick={handleExport}
+                disabled={users.length === 0 || loading}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                Export Data
+              </Button>
+            </div>
+          </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl text-purple-600">Create Interview Slot</CardTitle>
