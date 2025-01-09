@@ -35,7 +35,7 @@ export function InstructionsModal({ isOpen, onClose }) {
                   <div className="w-24">
                     <Button 
                       className="bg-purple-600 hover:bg-purple-600 w-full cursor-default" 
-                      disabled
+                      
                     >
                       10:00
                     </Button>

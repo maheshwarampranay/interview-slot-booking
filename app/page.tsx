@@ -1,27 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import Image from 'next/image'; 
 
 export default function HomePage() {
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
       <Card className="w-full max-w-md">
-        <CardHeader>
+        <CardHeader className="flex flex-col items-center">
+          <Image 
+            src="/cosc.png" 
+            alt="COSC Logo" 
+            width={80} 
+            height={80} 
+            className="mb-4" 
+          />
           <CardTitle className="text-2xl text-center text-purple-600">
-            COSC interview scheduler
+            COSC Interview Scheduler
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            We will remove the admin panel after generating links
+            Welcome! Please use your unique interview link to schedule your interview time slot.
           </p>
-          <div className="flex justify-center">
-            <Link href="/admin">
-              <Button className="bg-purple-600 hover:bg-purple-700">
-                Go to Admin Panel
-              </Button>
-            </Link>
-          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            If you haven't received your interview link, please contact team COSC.
+          </p>
         </CardContent>
       </Card>
     </div>
