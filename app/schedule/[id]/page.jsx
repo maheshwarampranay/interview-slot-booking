@@ -170,7 +170,7 @@ export default function SchedulePage() {
     
     try {
       const { date, time } = pendingSlot;
-      const slotKey = `${date}-${time}`;
+      const slotKey = `panel${user?.panel}-${date}-${time}`;
       
       setPendingBookings(prev => new Set(prev).add(slotKey));
       
