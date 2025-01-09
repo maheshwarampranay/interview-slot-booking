@@ -63,10 +63,10 @@ export default function SchedulePage() {
         setLoading(false);
         return;
       }
-
+  
       const userData = userDoc.data();
       setUser({ id: userDoc.id, ...userData });
-
+  
       const bookingsRef = collection(db, 'slots');
       const userBookingQuery = query(bookingsRef, where('userId', '==', id));
       const userBookingSnap = await getDocs(userBookingQuery);
@@ -76,7 +76,7 @@ export default function SchedulePage() {
         setExistingBooking(bookingData);
         setConfirmedSlot({ date: bookingData.date, time: bookingData.time });
       }
-
+  
       const panelBookingsQuery = query(bookingsRef, where('panel', '==', userData.panel));
       const bookingsSnap = await getDocs(panelBookingsQuery);
       const bookingsData = {};
@@ -89,8 +89,9 @@ export default function SchedulePage() {
       
       setBookings(bookingsData);
       setLoading(false);
-    } catch (err) {
-      setLoadError('Failed to load schedule data');
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setLoadError(`Failed to load schedule data: ${error.message}`);
       toast.error('Failed to load schedule data. Please try again.');
       setLoading(false);
     }
