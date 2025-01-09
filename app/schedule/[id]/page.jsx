@@ -2,27 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where } from 'firebase/firestore';
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  query, 
+  where,
+  runTransaction,
+  serverTimestamp,
+  onSnapshot
+} from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { db, generateTimeSlots } from '@/utils/firebase';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { CalendarIcon, Clock, MessageCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import InstructionsModal from '@/components/InstructionsModal';
+import Image from 'next/image';
 
 const WHATSAPP_GROUPS = {
-    '1': 'https://chat.whatsapp.com/E2L5kn6IJ9SEuysmp6GyKv',
-    '2': 'https://chat.whatsapp.com/CGb5zQI16FtJ0mU1dN6b3r',
-    '3': 'https://chat.whatsapp.com/Kjdt1ponnoO6RdqMQ7Y639',
-    '4': 'https://chat.whatsapp.com/JKdr7TRZsUFHiQKXWWSg95',
-  };
+  '1': 'https://chat.whatsapp.com/E2L5kn6IJ9SEuysmp6GyKv',
+  '2': 'https://chat.whatsapp.com/CGb5zQI16FtJ0mU1dN6b3r',
+  '3': 'https://chat.whatsapp.com/Kjdt1ponnoO6RdqMQ7Y639',
+  '4': 'https://chat.whatsapp.com/JKdr7TRZsUFHiQKXWWSg95',
+};
+
+const slotsRef = collection(db, 'slots');
 
 export default function SchedulePage() {
   const params = useParams();
   const id = params.id;
   
   const [user, setUser] = useState(null);
-  const [error, setError] = useState('');
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [confirmedSlot, setConfirmedSlot] = useState(null);
   const [existingBooking, setExistingBooking] = useState(null);
@@ -30,10 +44,15 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingSlot, setPendingSlot] = useState(null);
-
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [isBooking, setIsBooking] = useState(false);
+  const [pendingBookings, setPendingBookings] = useState(new Set());
+  const [loadError, setLoadError] = useState(null);
+  
   const dates = ['2025-01-10', '2025-01-11'];
   const morningSlots = generateTimeSlots('10:00', '13:00');
   const afternoonSlots = generateTimeSlots('14:00', '17:00');
+  const eveningSlots = ['17:00', '17:30', '18:00'];
 
   useEffect(() => {
     if (id) {
@@ -41,12 +60,35 @@ export default function SchedulePage() {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (user?.panel) {
+      const unsubscribe = onSnapshot(
+        query(collection(db, 'slots'), where('panel', '==', user.panel)),
+        (snapshot) => {
+          const newBookings = {};
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const key = `${data.date}-${data.time}`;
+            newBookings[key] = data;
+          });
+          setBookings(newBookings);
+        },
+        (error) => {
+          toast.error('Failed to sync booking updates. Please refresh the page.');
+          setLoadError('Failed to sync booking updates');
+        }
+      );
+
+      return () => unsubscribe();
+    }
+  }, [user?.panel]);
+
   const fetchUserAndBookings = async () => {
     try {
-      // Fetch user data
       const userDoc = await getDoc(doc(db, 'users', id));
       if (!userDoc.exists()) {
-        setError('Invalid interview link');
+        setLoadError('Invalid interview link');
+        toast.error('Invalid interview link');
         setLoading(false);
         return;
       }
@@ -54,8 +96,16 @@ export default function SchedulePage() {
       const userData = userDoc.data();
       setUser({ id: userDoc.id, ...userData });
 
-      // Fetch bookings for the specific panel
-      const bookingsRef = collection(db, 'bookings');
+      const bookingsRef = collection(db, 'slots');
+      const userBookingQuery = query(bookingsRef, where('userId', '==', id));
+      const userBookingSnap = await getDocs(userBookingQuery);
+      
+      if (!userBookingSnap.empty) {
+        const bookingData = userBookingSnap.docs[0].data();
+        setExistingBooking(bookingData);
+        setConfirmedSlot({ date: bookingData.date, time: bookingData.time });
+      }
+
       const panelBookingsQuery = query(bookingsRef, where('panel', '==', userData.panel));
       const bookingsSnap = await getDocs(panelBookingsQuery);
       const bookingsData = {};
@@ -63,31 +113,22 @@ export default function SchedulePage() {
       bookingsSnap.forEach(doc => {
         const data = doc.data();
         const key = `${data.date}-${data.time}`;
-        if (!bookingsData[key]) bookingsData[key] = [];
-        bookingsData[key].push(data);
-        
-        // If this booking belongs to current user, set it as existing booking
-        if (data.userId === userDoc.id) {
-          setExistingBooking(data);
-          setConfirmedSlot({ date: data.date, time: data.time });
-        }
+        bookingsData[key] = data;
       });
       
       setBookings(bookingsData);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to load data');
+      setLoadError('Failed to load schedule data');
+      toast.error('Failed to load schedule data. Please try again.');
       setLoading(false);
     }
   };
 
   const handleSlotSelect = (date, time) => {
     const slotKey = `${date}-${time}`;
-    const currentBookings = bookings[slotKey] || [];
-
-    if (currentBookings.length >= 1) {
-      setError('This slot is already booked');
+    if (bookings[slotKey]) {
+      toast.error('This slot is already booked');
       return;
     }
 
@@ -96,32 +137,94 @@ export default function SchedulePage() {
   };
 
   const handleConfirmSlot = async () => {
+    if (isBooking) return;
+    
+    setIsBooking(true);
+    const loadingToast = toast.loading('Booking your slot...');
+    
     try {
       const { date, time } = pendingSlot;
+      const slotKey = `${date}-${time}`;
       
-      await addDoc(collection(db, 'bookings'), {
-        userId: user.id,
-        name: user.name,
-        rollNumber: user.rollNumber,
-        panel: user.panel,
-        date,
-        time,
-        timestamp: new Date()
+      setPendingBookings(prev => new Set(prev).add(slotKey));
+      
+      await runTransaction(db, async (transaction) => {
+        const slotRef = doc(slotsRef, slotKey);
+        const slotDoc = await transaction.get(slotRef);
+        
+        if (slotDoc.exists()) {
+          throw new Error('This slot was just taken by someone else');
+        }
+
+        const existingBookingsQuery = query(slotsRef, where('userId', '==', user.id));
+        const existingBookings = await getDocs(existingBookingsQuery);
+        
+        if (!existingBookings.empty) {
+          throw new Error('You already have an active booking');
+        }
+
+        transaction.set(slotRef, {
+          userId: user.id,
+          name: user.name,
+          rollNumber: user.rollNumber,
+          panel: user.panel,
+          date,
+          time,
+          timestamp: serverTimestamp()
+        });
+
+        transaction.update(doc(db, 'users', user.id), {
+          hasScheduled: true
+        });
       });
 
-      await updateDoc(doc(db, 'users', user.id), {
-        hasScheduled: true
+      toast.success('Interview slot booked successfully!', {
+        id: loadingToast
       });
-
+      
       setConfirmedSlot({ date, time });
       setSelectedSlot({ date, time });
       setShowConfirmation(false);
-      setError('');
     } catch (error) {
       console.error('Error booking slot:', error);
-      setError('Failed to book slot');
-      setShowConfirmation(false);
+      toast.error(error.message || 'Failed to book slot. Please try another time.', {
+        id: loadingToast
+      });
+    } finally {
+      setIsBooking(false);
+      setPendingBookings(prev => {
+        const next = new Set(prev);
+        next.delete(`${pendingSlot.date}-${pendingSlot.time}`);
+        return next;
+      });
     }
+  };
+
+  const isSlotBooked = (date, time) => {
+    const slotKey = `${date}-${time}`;
+    return bookings[slotKey] || pendingBookings.has(slotKey);
+  };
+
+  const renderTimeSlot = (date, time) => {
+    const isBooked = isSlotBooked(date, time);
+    const isSelected = selectedSlot?.date === date && selectedSlot?.time === time;
+    
+    return (
+      <Button
+        key={time}
+        onClick={() => handleSlotSelect(date, time)}
+        disabled={isBooked || isSelected || confirmedSlot}
+        className={`p-2 text-sm ${
+          isSelected
+            ? 'bg-green-500 hover:bg-green-600'
+            : isBooked
+            ? 'bg-gray-300 text-black cursor-not-allowed'
+            : 'bg-purple-600 hover:bg-purple-700'
+        }`}
+      >
+        {time}
+      </Button>
+    );
   };
 
   if (loading) {
@@ -137,12 +240,12 @@ export default function SchedulePage() {
     );
   }
 
-  if (error && !confirmedSlot) {
+  if (loadError && !confirmedSlot) {
     return (
       <Card className="w-full max-w-md mx-auto mt-8">
         <CardContent className="p-6">
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{loadError}</AlertDescription>
           </Alert>
         </CardContent>
       </Card>
@@ -160,10 +263,17 @@ export default function SchedulePage() {
 
     return (
       <Card className="w-full max-w-md mx-auto mt-8">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl text-green-600">
             {confirmedSlot ? 'Interview Scheduled!' : 'Your Interview Details'}
           </CardTitle>
+          <Image
+            src="/cosc.png"
+            alt="COSC Logo"
+            width={64}
+            height={64}
+            className="object-contain"
+          />
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="bg-green-50 rounded-lg p-6 space-y-4">
@@ -201,16 +311,30 @@ export default function SchedulePage() {
 
   return (
     <>
+      <InstructionsModal 
+        isOpen={showInstructions} 
+        onClose={() => setShowInstructions(false)} 
+      />
+
       <Card className="w-full max-w-4xl mx-auto mt-8">
-        <CardHeader>
-          <CardTitle className="text-2xl text-purple-600">Welcome, {user?.name}! 🎉</CardTitle>
-          <p className="text-gray-600">Please choose your preferred interview time slot for Panel {user?.panel}</p>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl text-black">Hey there, {user?.name}! 🎉</CardTitle>
+            <p className="text-gray-600">Please choose your preferred interview time slot</p>
+          </div>
+          <Image
+            src="/cosc.png"
+            alt="COSC Logo"
+            width={64}
+            height={64}
+            className="object-contain"
+          />
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {dates.map(date => (
               <div key={date} className="space-y-4">
-                <h3 className="text-lg font-semibold text-purple-600">
+                <h3 className="text-lg font-semibold text-black">
                   {new Date(date).toLocaleDateString('en-US', { 
                     weekday: 'long', 
                     year: 'numeric', 
@@ -221,62 +345,29 @@ export default function SchedulePage() {
                 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium text-purple-500 mb-2">
+                    <h4 className="text-sm font-medium text-black mb-2">
                       Morning Slots (10 AM - 1 PM)
                     </h4>
                     <div className="grid grid-cols-4 gap-2">
-                      {morningSlots.map(time => {
-                        const slotKey = `${date}-${time}`;
-                        const isBooked = (bookings[slotKey]?.length ?? 0) > 0;
-                        const isSelected = selectedSlot?.date === date && selectedSlot?.time === time;
-                        
-                        return (
-                          <Button
-                            key={time}
-                            onClick={() => handleSlotSelect(date, time)}
-                            disabled={isBooked || isSelected || confirmedSlot}
-                            className={`p-2 text-sm ${
-                              isSelected
-                                ? 'bg-green-500 hover:bg-green-600'
-                                : isBooked
-                                ? 'bg-gray-300'
-                                : 'bg-purple-600 hover:bg-purple-700'
-                            }`}
-                          >
-                            {time}
-                          </Button>
-                        );
-                      })}
+                      {morningSlots.map(time => renderTimeSlot(date, time))}
                     </div>
                   </div>
                   
                   <div>
-                    <h4 className="text-sm font-medium text-purple-500 mb-2">
+                    <h4 className="text-sm font-medium text-black mb-2">
                       Afternoon Slots (2 PM - 5 PM)
                     </h4>
                     <div className="grid grid-cols-4 gap-2">
-                      {afternoonSlots.map(time => {
-                        const slotKey = `${date}-${time}`;
-                        const isBooked = (bookings[slotKey]?.length ?? 0) > 0;
-                        const isSelected = selectedSlot?.date === date && selectedSlot?.time === time;
-                        
-                        return (
-                          <Button
-                            key={time}
-                            onClick={() => handleSlotSelect(date, time)}
-                            disabled={isBooked || isSelected || confirmedSlot}
-                            className={`p-2 text-sm ${
-                              isSelected
-                                ? 'bg-green-500 hover:bg-green-600'
-                                : isBooked
-                                ? 'bg-gray-300'
-                                : 'bg-purple-600 hover:bg-purple-700'
-                            }`}
-                          >
-                            {time}
-                          </Button>
-                        );
-                      })}
+                      {afternoonSlots.map(time => renderTimeSlot(date, time))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-black mb-2">
+                      Evening Slots (5 PM - 6 PM)
+                    </h4>
+                    <div className="grid grid-cols-4 gap-2">
+                      {eveningSlots.map(time => renderTimeSlot(date, time))}
                     </div>
                   </div>
                 </div>

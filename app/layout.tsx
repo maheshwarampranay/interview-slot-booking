@@ -2,6 +2,7 @@
 import { Inter } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import './globals.css';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <div className="relative flex min-h-screen flex-col items-center justify-center">
           <div className="flex-1 flex items-center justify-center w-full">
             <div className="container py-6">
+            <Toaster position="top-center" reverseOrder={false} />
               {children}
             </div>
           </div>
