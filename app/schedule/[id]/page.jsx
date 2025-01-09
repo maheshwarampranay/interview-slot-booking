@@ -294,7 +294,7 @@ export default function SchedulePage() {
             {confirmedSlot ? 'Interview Scheduled!' : 'Your Interview Details'}
           </CardTitle>
           <Image
-            src="/cosc.png"
+            src="/cosc.svg"
             alt="COSC Logo"
             width={64}
             height={64}
@@ -349,7 +349,7 @@ export default function SchedulePage() {
             <p className="text-gray-600">Please choose your preferred interview time slot</p>
           </div>
           <Image
-            src="/cosc.png"
+            src="/cosc.svg"
             alt="COSC Logo"
             width={64}
             height={64}
