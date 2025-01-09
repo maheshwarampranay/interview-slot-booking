@@ -8,7 +8,7 @@ export default function HomePage() {
         <CardHeader className="flex flex-col items-center">
           {/* Add the logo here */}
           <Image 
-            src="/cosc.png" 
+            src="/cosc.svg" 
             alt="COSC Logo" 
             width={80} 
             height={80} 

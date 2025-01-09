@@ -152,7 +152,7 @@ export default function SchedulePage() {
   }, [user?.panel]);
 
   const handleSlotSelect = (date, time) => {
-    const slotKey = `${date}-${time}`;
+    const slotKey = `panel${user?.panel}-${date}-${time}`;
     if (bookings[slotKey]) {
       toast.error('This slot is already booked');
       return;
