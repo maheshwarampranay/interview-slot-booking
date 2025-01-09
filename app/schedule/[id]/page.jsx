@@ -16,7 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { db, generateTimeSlots } from '@/utils/firebase';
+import { db } from '@/utils/firebase';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { CalendarIcon, Clock, MessageCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -28,6 +28,31 @@ const WHATSAPP_GROUPS = {
   '2': 'https://chat.whatsapp.com/CGb5zQI16FtJ0mU1dN6b3r',
   '3': 'https://chat.whatsapp.com/Kjdt1ponnoO6RdqMQ7Y639',
   '4': 'https://chat.whatsapp.com/JKdr7TRZsUFHiQKXWWSg95',
+};
+
+const generateTimeSlots = (startTime, endTime) => {
+  const slots = [];
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+  
+  let currentHour = startHour;
+  let currentMinute = startMinute;
+  
+  while (currentHour < endHour || (currentHour === endHour && currentMinute <= endMinute)) {
+    const timeString = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+    
+    if (timeString !== '12:55' && timeString !== '16:55') {
+      slots.push(timeString);
+    }
+    
+    currentMinute += 25;
+    if (currentMinute >= 60) {
+      currentHour += 1;
+      currentMinute = currentMinute - 60;
+    }
+  }
+  
+  return slots;
 };
 
 const slotsRef = collection(db, 'slots');
@@ -52,7 +77,7 @@ export default function SchedulePage() {
   const dates = ['2025-01-10', '2025-01-11'];
   const morningSlots = generateTimeSlots('10:00', '13:00');
   const afternoonSlots = generateTimeSlots('14:00', '17:00');
-  const eveningSlots = ['17:00', '17:30', '18:00'];
+  const eveningSlots = ['17:00', '17:25'];
 
   const fetchUserAndBookings = useCallback(async () => {
     try {
@@ -365,7 +390,7 @@ export default function SchedulePage() {
 
                   <div>
                     <h4 className="text-sm font-medium text-black mb-2">
-                      Evening Slots (5 PM - 6 PM)
+                    Evening Slots (5 PM - 6 PM)
                     </h4>
                     <div className="grid grid-cols-4 gap-2">
                       {eveningSlots.map(time => renderTimeSlot(date, time))}
