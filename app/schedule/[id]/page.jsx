@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { 
   collection, 
@@ -54,36 +54,7 @@ export default function SchedulePage() {
   const afternoonSlots = generateTimeSlots('14:00', '17:00');
   const eveningSlots = ['17:00', '17:30', '18:00'];
 
-  useEffect(() => {
-    if (id) {
-      fetchUserAndBookings();
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (user?.panel) {
-      const unsubscribe = onSnapshot(
-        query(collection(db, 'slots'), where('panel', '==', user.panel)),
-        (snapshot) => {
-          const newBookings = {};
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const key = `${data.date}-${data.time}`;
-            newBookings[key] = data;
-          });
-          setBookings(newBookings);
-        },
-        (error) => {
-          toast.error('Failed to sync booking updates. Please refresh the page.');
-          setLoadError('Failed to sync booking updates');
-        }
-      );
-
-      return () => unsubscribe();
-    }
-  }, [user?.panel]);
-
-  const fetchUserAndBookings = async () => {
+  const fetchUserAndBookings = useCallback(async () => {
     try {
       const userDoc = await getDoc(doc(db, 'users', id));
       if (!userDoc.exists()) {
@@ -118,12 +89,41 @@ export default function SchedulePage() {
       
       setBookings(bookingsData);
       setLoading(false);
-    } catch (error) {
+    } catch (err) {
       setLoadError('Failed to load schedule data');
       toast.error('Failed to load schedule data. Please try again.');
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchUserAndBookings();
+    }
+  }, [id, fetchUserAndBookings]);
+
+  useEffect(() => {
+    if (user?.panel) {
+      const unsubscribe = onSnapshot(
+        query(collection(db, 'slots'), where('panel', '==', user.panel)),
+        (snapshot) => {
+          const newBookings = {};
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const key = `${data.date}-${data.time}`;
+            newBookings[key] = data;
+          });
+          setBookings(newBookings);
+        },
+        () => {
+          toast.error('Failed to sync booking updates. Please refresh the page.');
+          setLoadError('Failed to sync booking updates');
+        }
+      );
+
+      return () => unsubscribe();
+    }
+  }, [user?.panel]);
 
   const handleSlotSelect = (date, time) => {
     const slotKey = `${date}-${time}`;
