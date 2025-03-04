@@ -21,9 +21,9 @@ export function ConfirmationModal({
     <AlertDialog open={isOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Your Decipher Event Slot</AlertDialogTitle>
+          <AlertDialogTitle>Confirm Your Decipher Slot</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to book the following slot for the Decipher Event:
+            Are you sure you want to book the following slot for the Decipher:
             <div className="mt-2 text-black font-medium">
               {date} | {time}
             </div>

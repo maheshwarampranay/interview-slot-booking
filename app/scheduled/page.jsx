@@ -108,7 +108,7 @@ const TimelinePDF = ({ slots }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         <PDFImage src="/cosc.png" style={styles.logo} />
-        <Text style={styles.header}>Decipher Event Slot Booking</Text>
+        <Text style={styles.header}>Decipher Slot Booking</Text>
         <Text style={styles.dateHeader}>March 5th, 2024</Text>
         
         <View style={styles.table}>

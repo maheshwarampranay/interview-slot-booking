@@ -1,4 +1,3 @@
-//schedule/[id]/page.jsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -23,6 +22,7 @@ import { CalendarIcon, Clock, MessageCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import InstructionsModal from '@/components/InstructionsModal';
 import Image from 'next/image';
+import { updateDoc } from 'firebase/firestore';
 
 const WHATSAPP_GROUP = 'https://chat.whatsapp.com/Your_WhatsApp_Link_Here';
 
@@ -89,7 +89,11 @@ export default function SchedulePage() {
       
       bookingsSnap.forEach(doc => {
         const data = doc.data();
-        bookingsData[data.time] = data;
+        const timeSlot = data.time;
+        if (!bookingsData[timeSlot]) {
+          bookingsData[timeSlot] = [];
+        }
+        bookingsData[timeSlot].push(data);
       });
       
       setBookings(bookingsData);
@@ -115,7 +119,11 @@ export default function SchedulePage() {
         const newBookings = {};
         snapshot.forEach(doc => {
           const data = doc.data();
-          newBookings[data.time] = data;
+          const timeSlot = data.time;
+          if (!newBookings[timeSlot]) {
+            newBookings[timeSlot] = [];
+          }
+          newBookings[timeSlot].push(data);
         });
         setBookings(newBookings);
       },
@@ -129,8 +137,9 @@ export default function SchedulePage() {
   }, [date]);
 
   const handleSlotSelect = (time) => {
-    if (bookings[time]) {
-      toast.error('This slot is already booked');
+    const currentBookings = bookings[time] || [];
+    if (currentBookings.length >= 59) {
+      toast.error('This slot is fully booked');
       return;
     }
 
@@ -147,24 +156,36 @@ export default function SchedulePage() {
     try {
       const { date, time } = pendingSlot;
       
-      setPendingBookings(prev => new Set(prev).add(time));
-      
       await runTransaction(db, async (transaction) => {
-        const slotRef = doc(slotsRef, time);
-        const slotDoc = await transaction.get(slotRef);
+        // More comprehensive checks
+        const existingBookingsQuery = query(
+          slotsRef, 
+          where('date', '==', date),
+          where('time', '==', time)
+        );
+        const existingBookingsSnap = await getDocs(existingBookingsQuery);
         
-        if (slotDoc.exists()) {
-          throw new Error('This slot was just taken by someone else');
+        // Check if slot is already full (59 bookings)
+        if (existingBookingsSnap.size >= 59) {
+          throw new Error('This slot is now full');
         }
-
-        const existingBookingsQuery = query(slotsRef, where('userId', '==', user.id));
-        const existingBookings = await getDocs(existingBookingsQuery);
+  
+        // Check for existing bookings by this user for ANY slot
+        const userExistingBookingQuery = query(
+          slotsRef, 
+          where('userId', '==', user.id),
+          where('date', '==', date)  // Ensure same date
+        );
+        const userExistingBookings = await getDocs(userExistingBookingQuery);
         
-        if (!existingBookings.empty) {
-          throw new Error('You already have an active booking');
+        // Prevent multiple bookings on the same date
+        if (!userExistingBookings.empty) {
+          throw new Error('You can only book one slot per day');
         }
-
-        transaction.set(slotRef, {
+  
+        // Create new booking
+        const newBookingRef = doc(slotsRef);
+        transaction.set(newBookingRef, {
           userId: user.id,
           name: user.name,
           rollNumber: user.rollNumber,
@@ -173,7 +194,12 @@ export default function SchedulePage() {
           timestamp: serverTimestamp()
         });
       });
-
+  
+      // Update user document
+      await updateDoc(doc(db, 'users', user.id), {
+        hasScheduled: true
+      });
+  
       toast.success('Slot booked successfully!', {
         id: loadingToast
       });
@@ -188,19 +214,17 @@ export default function SchedulePage() {
       });
     } finally {
       setIsBooking(false);
-      setPendingBookings(prev => {
-        const next = new Set(prev);
-        next.delete(pendingSlot.time);
-        return next;
-      });
     }
   };
 
   const isSlotBooked = (time) => {
-    return bookings[time] || pendingBookings.has(time);
+    const currentBookings = bookings[time] || [];
+    return currentBookings.length >= 59 || pendingBookings.has(time);
   };
 
   const renderTimeSlot = (time) => {
+    const currentBookings = bookings[time] || [];
+    const availableSlots = 59 - currentBookings.length;
     const isBooked = isSlotBooked(time);
     const isSelected = selectedSlot?.time === time;
     
@@ -217,7 +241,12 @@ export default function SchedulePage() {
             : 'bg-purple-600 hover:bg-purple-700'
         }`}
       >
-        {time}
+        <div className="flex flex-col items-center">
+          <span>{time}</span>
+          <span className="text-xs">
+            {availableSlots} slots available
+          </span>
+        </div>
       </Button>
     );
   };
@@ -281,16 +310,6 @@ export default function SchedulePage() {
               <p className="text-sm text-gray-600 mb-3">
                 Please arrive at CSE Lab 8 or DF Lab 5 minutes before your slot.
               </p>
-              <a 
-                href={WHATSAPP_GROUP} 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                <Button className="w-full bg-green-600 hover:bg-green-700">
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Join WhatsApp Group
-                </Button>
-              </a>
             </div>
           </div>
         </CardContent>
@@ -309,7 +328,7 @@ export default function SchedulePage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-2xl text-black">Hey there, {user?.name}! 🎉</CardTitle>
-            <p className="text-gray-600">Select your slot for the Decipher Event on March 5th</p>
+            <p className="text-gray-600">Select your slot for the Decipher on March 5th</p>
           </div>
           <Image
             src="/cosc.svg"
@@ -323,7 +342,7 @@ export default function SchedulePage() {
           <div className="space-y-6">
             <div key="2024-03-05" className="space-y-4">
               <h3 className="text-lg font-semibold text-black">
-                Decipher Event - Slot Selection
+                Decipher - Slot Selection
               </h3>
               
               <div className="space-y-4">

@@ -15,7 +15,7 @@ export function InstructionsModal({ isOpen, onClose }) {
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
-          <AlertDialogTitle>Decipher Event - Slot Selection Guide</AlertDialogTitle>
+          <AlertDialogTitle>Decipher - Slot Selection Guide</AlertDialogTitle>
           <AlertDialogDescription className="space-y-4">
             <p>Please read these instructions carefully before selecting your slot:</p>
             
