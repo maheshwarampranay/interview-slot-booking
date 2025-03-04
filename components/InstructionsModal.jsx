@@ -1,3 +1,4 @@
+//instruction modal.jsx
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,17 +15,18 @@ export function InstructionsModal({ isOpen, onClose }) {
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
-          <AlertDialogTitle>Interview Slot Selection Guide</AlertDialogTitle>
+          <AlertDialogTitle>Decipher Event - Slot Selection Guide</AlertDialogTitle>
           <AlertDialogDescription className="space-y-4">
-            <p>Please read these instructions carefully before selecting your interview slot:</p>
+            <p>Please read these instructions carefully before selecting your slot:</p>
             
             <div className="mt-4 space-y-2">
               <p className="font-medium text-black">Important Information:</p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>Slots are assigned on a first-come, first-served basis</li>
-                <li>Once confirmed, your slot selection cannot be changed</li>
-                <li>You must join your panel&apos;s WhatsApp group after scheduling</li>
-                <li>Please be online 5 minutes before your scheduled time</li>
+                <li>Each team can attempt the challenge only once during their slot</li>
+                <li>The event will be held at CSE Lab 8 & DF (Digital Fabrication) Lab</li>
+                <li>Please arrive 5 minutes before your scheduled slot</li>
+                <li>Teams qualifying for Round 2 will be informed after the first round</li>
               </ul>
             </div>
 
@@ -32,28 +34,36 @@ export function InstructionsModal({ isOpen, onClose }) {
               <p className="font-medium text-black mb-2">Slot Color Guide:</p>
               <div className="grid gap-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-24">
+                  <div className="w-36">
                     <Button 
                       className="bg-purple-600 hover:bg-purple-600 w-full cursor-default" 
-                      
                     >
-                      10:00
+                      09:40 AM to 10:30 AM
                     </Button>
                   </div>
-                  <span className="text-black">Available for scheduling</span>
+                  <span className="text-black">Available for booking</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-24">
+                  <div className="w-36">
                     <Button 
                       className="bg-gray-300 hover:bg-gray-300 w-full cursor-default text-gray-700" 
                       disabled
                     >
-                      10:30
+                      10:30 AM to 11:20 AM
                     </Button>
                   </div>
-                  <span className="text-black">Already scheduled by others</span>
+                  <span className="text-black">Already scheduled</span>
                 </div>
               </div>
+            </div>
+
+            <div className="mt-4">
+              <p className="font-medium text-black mb-2">Additional Notes:</p>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Once a slot is booked, it cannot be changed</li>
+                <li>Ensure all team members are aware of the selected time slot</li>
+                <li>Have all required materials ready for the challenge</li>
+              </ul>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>

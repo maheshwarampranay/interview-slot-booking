@@ -1,4 +1,4 @@
-// app/layout.tsx
+//layout.tsx
 import { Inter } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import './globals.css';
@@ -7,8 +7,8 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'COSC Interview Scheduler',
-  description: 'JD recruitment 2025',
+  title: 'Decipher Event - Slot Booking',
+  description: 'Slot booking for Decipher Event by COSC',
 };
 
 interface RootLayoutProps {

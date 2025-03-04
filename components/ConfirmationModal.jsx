@@ -1,3 +1,4 @@
+//confirmation modal.jsx
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,29 +17,25 @@ export function ConfirmationModal({
   date, 
   time 
 }) {
-  const formattedDate = new Date(date).toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-
   return (
     <AlertDialog open={isOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Your Interview Slot</AlertDialogTitle>
+          <AlertDialogTitle>Confirm Your Decipher Event Slot</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to schedule your interview for:
+            Are you sure you want to book the following slot for the Decipher Event:
             <div className="mt-2 text-black font-medium">
-              {formattedDate} at {time}
+              {date} | {time}
+            </div>
+            <div className="mt-2 text-sm text-gray-600">
+              Reminder: You can only attempt the challenge once during this slot.
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className="bg-purple-600 hover:bg-purple-700">
-            Confirm Booking
+            Confirm Slot
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

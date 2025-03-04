@@ -1,3 +1,4 @@
+//schedule/[id]/page.jsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -23,36 +24,15 @@ import { toast } from 'react-hot-toast';
 import InstructionsModal from '@/components/InstructionsModal';
 import Image from 'next/image';
 
-const WHATSAPP_GROUPS = {
-  '1': 'https://chat.whatsapp.com/E2L5kn6IJ9SEuysmp6GyKv',
-  '2': 'https://chat.whatsapp.com/CGb5zQI16FtJ0mU1dN6b3r',
-  '3': 'https://chat.whatsapp.com/Kjdt1ponnoO6RdqMQ7Y639',
-  '4': 'https://chat.whatsapp.com/JKdr7TRZsUFHiQKXWWSg95',
-};
+const WHATSAPP_GROUP = 'https://chat.whatsapp.com/Your_WhatsApp_Link_Here';
 
-const generateTimeSlots = (startTime, endTime) => {
-  const slots = [];
-  const [startHour, startMinute] = startTime.split(':').map(Number);
-  const [endHour, endMinute] = endTime.split(':').map(Number);
-  
-  let currentHour = startHour;
-  let currentMinute = startMinute;
-  
-  while (currentHour < endHour || (currentHour === endHour && currentMinute <= endMinute)) {
-    const timeString = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-    
-    if (timeString !== '12:55' && timeString !== '16:55') {
-      slots.push(timeString);
-    }
-    
-    currentMinute += 25;
-    if (currentMinute >= 60) {
-      currentHour += 1;
-      currentMinute = currentMinute - 60;
-    }
-  }
-  
-  return slots;
+const generateTimeSlots = () => {
+  return [
+    '09:40 AM to 10:30 AM',
+    '10:30 AM to 11:20 AM', 
+    '11:20 AM to 12:10 PM', 
+    '12:10 PM to 01:30 PM'
+  ];
 };
 
 const slotsRef = collection(db, 'slots');
@@ -74,17 +54,15 @@ export default function SchedulePage() {
   const [pendingBookings, setPendingBookings] = useState(new Set());
   const [loadError, setLoadError] = useState(null);
   
-  const dates = ['2025-01-10', '2025-01-11'];
-  const morningSlots = generateTimeSlots('10:00', '13:00');
-  const afternoonSlots = generateTimeSlots('14:00', '17:00');
-  const eveningSlots = ['17:00', '17:25'];
+  const timeSlots = generateTimeSlots();
+  const date = '2024-03-05';
 
   const fetchUserAndBookings = useCallback(async () => {
     try {
       const userDoc = await getDoc(doc(db, 'users', id));
       if (!userDoc.exists()) {
-        setLoadError('Invalid interview link');
-        toast.error('Invalid interview link');
+        setLoadError('Invalid participant link');
+        toast.error('Invalid participant link');
         setLoading(false);
         return;
       }
@@ -99,17 +77,19 @@ export default function SchedulePage() {
       if (!userBookingSnap.empty) {
         const bookingData = userBookingSnap.docs[0].data();
         setExistingBooking(bookingData);
-        setConfirmedSlot({ date: bookingData.date, time: bookingData.time });
+        setConfirmedSlot({ 
+          date: bookingData.date, 
+          time: bookingData.time 
+        });
       }
   
-      const panelBookingsQuery = query(bookingsRef, where('panel', '==', userData.panel));
-      const bookingsSnap = await getDocs(panelBookingsQuery);
+      const allBookingsQuery = query(bookingsRef, where('date', '==', date));
+      const bookingsSnap = await getDocs(allBookingsQuery);
       const bookingsData = {};
       
       bookingsSnap.forEach(doc => {
         const data = doc.data();
-        const key = `${data.date}-${data.time}`;
-        bookingsData[key] = data;
+        bookingsData[data.time] = data;
       });
       
       setBookings(bookingsData);
@@ -120,7 +100,7 @@ export default function SchedulePage() {
       toast.error('Failed to load schedule data. Please try again.');
       setLoading(false);
     }
-  }, [id]);
+  }, [id, date]);
 
   useEffect(() => {
     if (id) {
@@ -129,31 +109,27 @@ export default function SchedulePage() {
   }, [id, fetchUserAndBookings]);
 
   useEffect(() => {
-    if (user?.panel) {
-      const unsubscribe = onSnapshot(
-        query(collection(db, 'slots'), where('panel', '==', user.panel)),
-        (snapshot) => {
-          const newBookings = {};
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const key = `${data.date}-${data.time}`;
-            newBookings[key] = data;
-          });
-          setBookings(newBookings);
-        },
-        () => {
-          toast.error('Failed to sync booking updates. Please refresh the page.');
-          setLoadError('Failed to sync booking updates');
-        }
-      );
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'slots'), where('date', '==', date)),
+      (snapshot) => {
+        const newBookings = {};
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          newBookings[data.time] = data;
+        });
+        setBookings(newBookings);
+      },
+      () => {
+        toast.error('Failed to sync booking updates. Please refresh the page.');
+        setLoadError('Failed to sync booking updates');
+      }
+    );
 
-      return () => unsubscribe();
-    }
-  }, [user?.panel]);
+    return () => unsubscribe();
+  }, [date]);
 
-  const handleSlotSelect = (date, time) => {
-    const slotKey = `panel${user?.panel}-${date}-${time}`;
-    if (bookings[slotKey]) {
+  const handleSlotSelect = (time) => {
+    if (bookings[time]) {
       toast.error('This slot is already booked');
       return;
     }
@@ -170,12 +146,11 @@ export default function SchedulePage() {
     
     try {
       const { date, time } = pendingSlot;
-      const slotKey = `panel${user?.panel}-${date}-${time}`;
       
-      setPendingBookings(prev => new Set(prev).add(slotKey));
+      setPendingBookings(prev => new Set(prev).add(time));
       
       await runTransaction(db, async (transaction) => {
-        const slotRef = doc(slotsRef, slotKey);
+        const slotRef = doc(slotsRef, time);
         const slotDoc = await transaction.get(slotRef);
         
         if (slotDoc.exists()) {
@@ -193,18 +168,13 @@ export default function SchedulePage() {
           userId: user.id,
           name: user.name,
           rollNumber: user.rollNumber,
-          panel: user.panel,
           date,
           time,
           timestamp: serverTimestamp()
         });
-
-        transaction.update(doc(db, 'users', user.id), {
-          hasScheduled: true
-        });
       });
 
-      toast.success('Interview slot booked successfully!', {
+      toast.success('Slot booked successfully!', {
         id: loadingToast
       });
       
@@ -220,27 +190,26 @@ export default function SchedulePage() {
       setIsBooking(false);
       setPendingBookings(prev => {
         const next = new Set(prev);
-        next.delete(`${pendingSlot.date}-${pendingSlot.time}`);
+        next.delete(pendingSlot.time);
         return next;
       });
     }
   };
 
-  const isSlotBooked = (date, time) => {
-    const slotKey = `${date}-${time}`;
-    return bookings[slotKey] || pendingBookings.has(slotKey);
+  const isSlotBooked = (time) => {
+    return bookings[time] || pendingBookings.has(time);
   };
 
-  const renderTimeSlot = (date, time) => {
-    const isBooked = isSlotBooked(date, time);
-    const isSelected = selectedSlot?.date === date && selectedSlot?.time === time;
+  const renderTimeSlot = (time) => {
+    const isBooked = isSlotBooked(time);
+    const isSelected = selectedSlot?.time === time;
     
     return (
       <Button
         key={time}
-        onClick={() => handleSlotSelect(date, time)}
+        onClick={() => handleSlotSelect(time)}
         disabled={isBooked || isSelected || confirmedSlot}
-        className={`p-2 text-sm ${
+        className={`p-2 text-sm whitespace-normal h-auto ${
           isSelected
             ? 'bg-green-500 hover:bg-green-600'
             : isBooked
@@ -280,18 +249,12 @@ export default function SchedulePage() {
 
   if (confirmedSlot || existingBooking) {
     const slot = confirmedSlot || existingBooking;
-    const formattedDate = new Date(slot.date).toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
 
     return (
       <Card className="w-full max-w-md mx-auto mt-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl text-green-600">
-            {confirmedSlot ? 'Interview Scheduled!' : 'Your Interview Details'}
+            Slot Confirmed!
           </CardTitle>
           <Image
             src="/cosc.svg"
@@ -303,11 +266,11 @@ export default function SchedulePage() {
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="bg-green-50 rounded-lg p-6 space-y-4">
-            <p className="text-lg font-medium">Hi {user?.name}, your interview has been scheduled!</p>
+            <p className="text-lg font-medium">Hi {user?.name}, your slot is confirmed!</p>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <CalendarIcon className="h-5 w-5 text-green-600" />
-                <span>{formattedDate}</span>
+                <span>March 5th, 2024</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="h-5 w-5 text-green-600" />
@@ -316,16 +279,16 @@ export default function SchedulePage() {
             </div>
             <div className="mt-6">
               <p className="text-sm text-gray-600 mb-3">
-                Please join the meet 5 minutes before your scheduled time.
+                Please arrive at CSE Lab 8 or DF Lab 5 minutes before your slot.
               </p>
               <a 
-                href={WHATSAPP_GROUPS[user?.panel]} 
+                href={WHATSAPP_GROUP} 
                 target="_blank" 
                 rel="noopener noreferrer"
               >
                 <Button className="w-full bg-green-600 hover:bg-green-700">
                   <MessageCircle className="w-5 h-5 mr-2" />
-                  Join Panel {user?.panel} WhatsApp Group
+                  Join WhatsApp Group
                 </Button>
               </a>
             </div>
@@ -346,7 +309,7 @@ export default function SchedulePage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-2xl text-black">Hey there, {user?.name}! 🎉</CardTitle>
-            <p className="text-gray-600">Please choose your preferred interview time slot</p>
+            <p className="text-gray-600">Select your slot for the Decipher Event on March 5th</p>
           </div>
           <Image
             src="/cosc.svg"
@@ -358,47 +321,22 @@ export default function SchedulePage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {dates.map(date => (
-              <div key={date} className="space-y-4">
-                <h3 className="text-lg font-semibold text-black">
-                  {new Date(date).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-black mb-2">
-                      Morning Slots (10 AM - 1 PM)
-                    </h4>
-                    <div className="grid grid-cols-4 gap-2">
-                      {morningSlots.map(time => renderTimeSlot(date, time))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-black mb-2">
-                      Afternoon Slots (2 PM - 5 PM)
-                    </h4>
-                    <div className="grid grid-cols-4 gap-2">
-                      {afternoonSlots.map(time => renderTimeSlot(date, time))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium text-black mb-2">
-                    Evening Slots (5 PM - 6 PM)
-                    </h4>
-                    <div className="grid grid-cols-4 gap-2">
-                      {eveningSlots.map(time => renderTimeSlot(date, time))}
-                    </div>
+            <div key="2024-03-05" className="space-y-4">
+              <h3 className="text-lg font-semibold text-black">
+                Decipher Event - Slot Selection
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-black mb-2">
+                    Available Slots
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {timeSlots.map(time => renderTimeSlot(time))}
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -410,7 +348,7 @@ export default function SchedulePage() {
           setShowConfirmation(false);
           setPendingSlot(null);
         }}
-        date={pendingSlot?.date}
+        date="March 5th, 2024"
         time={pendingSlot?.time}
       />
     </>
