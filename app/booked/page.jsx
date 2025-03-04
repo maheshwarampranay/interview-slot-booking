@@ -4,14 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   collection, 
   getDocs, 
-  query, 
-  where, 
-  orderBy 
 } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import * as XLSX from 'xlsx';
 import { Loader2 } from 'lucide-react';
 
@@ -25,7 +21,6 @@ const TIME_SLOTS = [
 export default function BookedUsersPage() {
   const [bookedUsers, setBookedUsers] = useState({});
   const [loading, setLoading] = useState(true);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
 
   useEffect(() => {
     fetchBookedUsers();

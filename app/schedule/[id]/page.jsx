@@ -18,13 +18,11 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { db } from '@/utils/firebase';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { CalendarIcon, Clock, MessageCircle } from 'lucide-react';
+import { CalendarIcon, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import InstructionsModal from '@/components/InstructionsModal';
 import Image from 'next/image';
 import { updateDoc } from 'firebase/firestore';
-
-const WHATSAPP_GROUP = 'https://chat.whatsapp.com/Your_WhatsApp_Link_Here';
 
 const generateTimeSlots = () => {
   return [
@@ -51,7 +49,6 @@ export default function SchedulePage() {
   const [pendingSlot, setPendingSlot] = useState(null);
   const [showInstructions, setShowInstructions] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
-  const [pendingBookings, setPendingBookings] = useState(new Set());
   const [loadError, setLoadError] = useState(null);
   
   const timeSlots = generateTimeSlots();
@@ -219,9 +216,8 @@ export default function SchedulePage() {
 
   const isSlotBooked = (time) => {
     const currentBookings = bookings[time] || [];
-    return currentBookings.length >= 59 || pendingBookings.has(time);
+    return currentBookings.length >= 59;
   };
-
   const renderTimeSlot = (time) => {
     const currentBookings = bookings[time] || [];
     const availableSlots = 59 - currentBookings.length;
