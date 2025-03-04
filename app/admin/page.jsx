@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db } from '@/utils/firebase';
 import * as XLSX from 'xlsx';
 import { Loader2 } from 'lucide-react';
@@ -20,7 +19,6 @@ export default function AdminPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
-  const [panel, setPanel] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
 
   useEffect(() => {
@@ -77,23 +75,18 @@ export default function AdminPage() {
         const worksheet = workbook.Sheets[sheetName];
         const data = XLSX.utils.sheet_to_json(worksheet);
 
-        if (!data.every(row => row.Name && row['Roll Number'] && row.Panel)) {
-          throw new Error('Excel file must contain "Name", "Roll Number", and "Panel" columns');
+        if (!data.every(row => row.Name && row['Roll Number'])) {
+          throw new Error('Excel file must contain "Name" and "Roll Number" columns');
         }
 
         const baseUrl = window.location.origin;
         const results = [];
 
         for (const row of data) {
-          if (!['1', '2', '3', '4'].includes(row.Panel.toString())) {
-            throw new Error(`Invalid panel number ${row.Panel}. Panel must be 1, 2, 3, or 4`);
-          }
-
           const userId = await handleCreateUser({
             name: row.Name,
             rollNumber: row['Roll Number'],
             email: row.Email || '',
-            panel: row.Panel.toString()
           });
 
           results.push({
@@ -124,7 +117,6 @@ export default function AdminPage() {
       const userId = await handleCreateUser({
         name,
         rollNumber,
-        panel,
         email: ''
       });
       const link = `${window.location.origin}/schedule/${userId}`;
@@ -133,7 +125,6 @@ export default function AdminPage() {
       
       setName('');
       setRollNumber('');
-      setPanel('');
       setErrorMessage('');
     } catch (submitError) {
       setErrorMessage(submitError.message);
@@ -144,7 +135,6 @@ export default function AdminPage() {
     const exportData = users.map(user => ({
       Name: user.name,
       'Roll Number': user.rollNumber,
-      Panel: user.panel,
       Email: user.email || '',
       Link: `${window.location.origin}/schedule/${user.id}`
     }));
@@ -208,7 +198,7 @@ export default function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl text-purple-600">Create Interview Slot</CardTitle>
+          <CardTitle className="text-2xl text-purple-600">Create Candidate</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleFormSubmit} className="space-y-4">
@@ -219,6 +209,7 @@ export default function AdminPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter candidate name"
+                required
               />
             </div>
             <div>
@@ -228,21 +219,8 @@ export default function AdminPage() {
                 value={rollNumber}
                 onChange={(e) => setRollNumber(e.target.value)}
                 placeholder="Enter roll number"
+                required
               />
-            </div>
-            <div>
-              <Label htmlFor="panel">Panel Number</Label>
-              <Select value={panel} onValueChange={setPanel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select panel number" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Panel 1</SelectItem>
-                  <SelectItem value="2">Panel 2</SelectItem>
-                  <SelectItem value="3">Panel 3</SelectItem>
-                  <SelectItem value="4">Panel 4</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
               Generate Interview Link
@@ -275,7 +253,7 @@ export default function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl text-purple-600">Created Interview Slots</CardTitle>
+          <CardTitle className="text-2xl text-purple-600">Created Candidates</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -288,7 +266,6 @@ export default function AdminPage() {
                     <div>
                       <p className="font-medium">{user.name}</p>
                       <p className="text-sm text-gray-600">Roll Number: {user.rollNumber}</p>
-                      <p className="text-sm text-gray-600">Panel: {user.panel}</p>
                       <p className="text-sm text-gray-600">
                         Status: {user.hasScheduled ? 'Scheduled' : 'Pending'}
                       </p>

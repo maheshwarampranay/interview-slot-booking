@@ -3,13 +3,13 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDmLgTCorIrrEVaVjaAVj7yN7LktcVd0MY",
-    authDomain: "spotify-clone-5ab74.firebaseapp.com",
-    projectId: "spotify-clone-5ab74",
-    storageBucket: "spotify-clone-5ab74.appspot.com",
-    messagingSenderId: "607253520689",
-    appId: "1:607253520689:web:c060daef5f1c897b2b9010"
-  };
+  apiKey: "AIzaSyC-BbbEwgAfcAGcJdKOr3fT9S3oNhQvMwI",
+  authDomain: "scheduler-73212.firebaseapp.com",
+  projectId: "scheduler-73212",
+  storageBucket: "scheduler-73212.firebasestorage.app",
+  messagingSenderId: "470613926780",
+  appId: "1:470613926780:web:9b055efdcea0bf674c7af9"
+};
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);

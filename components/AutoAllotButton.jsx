@@ -8,33 +8,23 @@ import { db } from '@/utils/firebase';
 import toast from 'react-hot-toast';
 
 const timeSlots = {
-  '2025-01-10': {
-    morning: ['10:00', '10:25', '10:50', '11:15', '11:40', '12:05', '12:30'],
-    afternoon: ['14:00', '14:25', '14:50', '15:15', '15:40', '16:05', '16:30'],
-    evening: ['17:00', '17:25']
-  },
-  '2025-01-11': {
-    morning: ['10:00', '10:25', '10:50', '11:15', '11:40', '12:05', '12:30'],
-    afternoon: ['14:00', '14:25', '14:50', '15:15', '15:40', '16:05', '16:30'],
-    evening: ['17:00', '17:25']
-  }
+  '2024-03-05': [
+    '09:40 AM to 10:30 AM',
+    '10:30 AM to 11:20 AM', 
+    '11:20 AM to 12:10 PM', 
+    '12:10 PM to 01:30 PM'
+  ]
 };
 
 const AutoAllotButton = ({ onComplete }) => {
   const [loading, setLoading] = useState(false);
 
-  const findAvailableSlot = (bookedSlots, date, panel) => {
-    const panelBookings = bookedSlots.filter(slot => 
-      slot.panel === panel && slot.date === date
-    );
+  const findAvailableSlot = (bookedSlots) => {
+    const bookedTimes = new Set(bookedSlots.map(slot => slot.time));
     
-    const bookedTimes = new Set(panelBookings.map(slot => slot.time));
-    
-    for (const period of ['morning', 'afternoon', 'evening']) {
-      for (const time of timeSlots[date][period]) {
-        if (!bookedTimes.has(time)) {
-          return time;
-        }
+    for (const time of timeSlots['2024-03-05']) {
+      if (!bookedTimes.has(time)) {
+        return time;
       }
     }
     return null;
@@ -58,45 +48,36 @@ const AutoAllotButton = ({ onComplete }) => {
       const usersSnapshot = await getDocs(usersQuery);
       
       let allotmentCount = 0;
-      const dates = Object.keys(timeSlots);
+      const date = '2024-03-05';
 
       for (const userDoc of usersSnapshot.docs) {
         const userData = userDoc.data();
         
         const existingSlot = existingSlots.find(slot => 
-          slot.userId === userDoc.id || slot.email === userData.email
+          slot.userId === userDoc.id
         );
         if (existingSlot) continue;
 
-        let allocated = false;
-        for (const date of dates) {
-          const availableTime = findAvailableSlot(existingSlots, date, userData.panel);
-          if (availableTime) {
-            const slotData = {
-              date,
-              time: availableTime,
-              panel: userData.panel,
-              name: userData.name,
-              email: userData.email,
-              rollNumber: userData.rollNumber,
-              userId: userDoc.id,
-              createdAt: new Date()
-            };
+        const availableTime = findAvailableSlot(existingSlots);
+        if (availableTime) {
+          const slotData = {
+            date,
+            time: availableTime,
+            name: userData.name,
+            rollNumber: userData.rollNumber,
+            userId: userDoc.id,
+            createdAt: new Date()
+          };
 
-            await addDoc(collection(db, 'slots'), slotData);
-            
-            await updateDoc(doc(db, 'users', userDoc.id), {
-              hasScheduled: true
-            });
+          await addDoc(collection(db, 'slots'), slotData);
+          
+          await updateDoc(doc(db, 'users', userDoc.id), {
+            hasScheduled: true
+          });
 
-            existingSlots.push(slotData);
-            allotmentCount++;
-            allocated = true;
-            break;
-          }
-        }
-
-        if (!allocated) {
+          existingSlots.push(slotData);
+          allotmentCount++;
+        } else {
           console.warn(`Could not find slot for user: ${userData.name}`);
         }
       }
