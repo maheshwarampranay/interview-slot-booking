@@ -218,7 +218,7 @@ export default function SchedulePage() {
     const currentBookings = bookings[time] || [];
     return currentBookings.length >= 59;
   };
-  const renderTimeSlot = (time) => {
+  function renderTimeSlot(time) {
     const currentBookings = bookings[time] || [];
     const availableSlots = 59 - currentBookings.length;
     const isBooked = isSlotBooked(time);
@@ -229,7 +229,7 @@ export default function SchedulePage() {
         key={time}
         onClick={() => handleSlotSelect(time)}
         disabled={isBooked || isSelected || confirmedSlot}
-        className={`p-2 text-sm whitespace-normal h-auto ${
+        className={`p-1.5 sm:p-2 text-xs sm:text-sm whitespace-normal h-auto ${
           isSelected
             ? 'bg-green-500 hover:bg-green-600'
             : isBooked
@@ -238,22 +238,22 @@ export default function SchedulePage() {
         }`}
       >
         <div className="flex flex-col items-center">
-          <span>{time}</span>
-          <span className="text-xs">
+          <span className="text-xs sm:text-sm">{time}</span>
+          <span className="text-[10px] sm:text-xs opacity-80">
             {availableSlots} slots available
           </span>
         </div>
       </Button>
     );
-  };
+  }
 
   if (loading) {
     return (
-      <Card className="w-full max-w-md mx-auto mt-8">
-        <CardContent className="p-6">
+      <Card className="w-full max-w-md mx-auto mt-4 sm:mt-8 p-2 sm:p-0">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex items-center justify-center space-x-2">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600" />
-            <p>Loading...</p>
+            <p className="text-sm sm:text-base">Loading...</p>
           </div>
         </CardContent>
       </Card>
@@ -262,10 +262,10 @@ export default function SchedulePage() {
 
   if (loadError && !confirmedSlot) {
     return (
-      <Card className="w-full max-w-md mx-auto mt-8">
-        <CardContent className="p-6">
+      <Card className="w-full max-w-md mx-auto mt-4 sm:mt-8 p-2 sm:p-0">
+        <CardContent className="p-4 sm:p-6">
           <Alert variant="destructive">
-            <AlertDescription>{loadError}</AlertDescription>
+            <AlertDescription className="text-sm sm:text-base">{loadError}</AlertDescription>
           </Alert>
         </CardContent>
       </Card>
@@ -276,34 +276,34 @@ export default function SchedulePage() {
     const slot = confirmedSlot || existingBooking;
 
     return (
-      <Card className="w-full max-w-md mx-auto mt-8">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl text-green-600">
+      <Card className="w-full max-w-md mx-auto mt-4 sm:mt-8 p-2 sm:p-0">
+        <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
+          <CardTitle className="text-xl sm:text-2xl text-green-600">
             Slot Confirmed!
           </CardTitle>
           <Image
             src="/cosc.svg"
             alt="COSC Logo"
-            width={64}
-            height={64}
-            className="object-contain"
+            width={48}
+            height={48}
+            className="object-contain w-12 h-12 sm:w-16 sm:h-16"
           />
         </CardHeader>
-        <CardContent className="p-6 space-y-4">
-          <div className="bg-green-50 rounded-lg p-6 space-y-4">
-            <p className="text-lg font-medium">Hi {user?.name}, your slot is confirmed!</p>
+        <CardContent className="p-4 sm:p-6 space-y-4">
+          <div className="bg-green-50 rounded-lg p-4 sm:p-6 space-y-4">
+            <p className="text-base sm:text-lg font-medium">Hi {user?.name}, your slot is confirmed!</p>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <CalendarIcon className="h-5 w-5 text-green-600" />
-                <span>March 5th, 2024</span>
+                <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <span className="text-sm sm:text-base">March 5th, 2024</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-green-600" />
-                <span>{slot.time}</span>
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <span className="text-sm sm:text-base">{slot.time}</span>
               </div>
             </div>
-            <div className="mt-6">
-              <p className="text-sm text-gray-600 mb-3">
+            <div className="mt-4 sm:mt-6">
+              <p className="text-xs sm:text-sm text-gray-600 mb-3">
                 Please arrive at CSE Lab 8 or DF Lab 5 minutes before your slot.
               </p>
             </div>
@@ -320,33 +320,33 @@ export default function SchedulePage() {
         onClose={() => setShowInstructions(false)} 
       />
 
-      <Card className="w-full max-w-4xl mx-auto mt-8">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 p-2 sm:p-0">
+        <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
           <div>
-            <CardTitle className="text-2xl text-black">Hey there, {user?.name}! 🎉</CardTitle>
-            <p className="text-gray-600">Select your slot for the Decipher on March 5th</p>
+            <CardTitle className="text-xl sm:text-2xl text-black">Hey there, {user?.name}! 🎉</CardTitle>
+            <p className="text-sm sm:text-base text-gray-600">Select your slot for the Decipher on March 5th</p>
           </div>
           <Image
             src="/cosc.svg"
             alt="COSC Logo"
-            width={64}
-            height={64}
-            className="object-contain"
+            width={48}
+            height={48}
+            className="object-contain w-12 h-12 sm:w-16 sm:h-16"
           />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <div className="space-y-6">
             <div key="2024-03-05" className="space-y-4">
-              <h3 className="text-lg font-semibold text-black">
+              <h3 className="text-base sm:text-lg font-semibold text-black">
                 Decipher - Slot Selection
               </h3>
               
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-medium text-black mb-2">
+                  <h4 className="text-xs sm:text-sm font-medium text-black mb-2">
                     Available Slots
                   </h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
                     {timeSlots.map(time => renderTimeSlot(time))}
                   </div>
                 </div>
@@ -368,4 +368,7 @@ export default function SchedulePage() {
       />
     </>
   );
+
+  // Slot rendering method with mobile-friendly adjustments
+  
 }
