@@ -15,7 +15,7 @@ export function InstructionsModal({ isOpen, onClose }) {
       <AlertDialogContent className="max-w-xs sm:max-w-md md:max-w-2xl p-4 sm:p-6">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-lg sm:text-xl md:text-2xl">
-            Decipher - Slot Selection Guide
+            COSC Recruitments - Interview Slot Selection Guide
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-3 sm:space-y-4">
             <p className="text-xs sm:text-sm">
@@ -27,11 +27,11 @@ export function InstructionsModal({ isOpen, onClose }) {
                 Important Information:
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 text-xs sm:text-sm">
-                <li>Slots are assigned on a first-come, first-served basis</li>
-                <li>Each team can attempt the challenge only once during their slot</li>
-                <li>The event will be held at CSE Lab 8 & DF (Digital Fabrication) Lab</li>
-                <li>Please arrive 5 minutes before your scheduled slot</li>
-                <li>Teams qualifying for Round 2 will be informed after the first round</li>
+                <li>Slots are assigned on first-come, first-served basis.</li>
+                <li>An individual can book the slot only once.</li>
+                <li>The interview will be conducted online.</li>
+                <li>Please be ready 5 minutes before your interview starts.</li>
+                <li>Once a slot is booked, it cannot be changed. So, please make sure you book the slot in your available time.</li>
               </ul>
             </div>
 
@@ -83,8 +83,6 @@ export function InstructionsModal({ isOpen, onClose }) {
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 text-xs sm:text-sm">
                 <li>Once a slot is booked, it cannot be changed</li>
-                <li>Ensure all team members are aware of the selected time slot</li>
-                <li>Have all required materials ready for the challenge</li>
               </ul>
             </div>
           </AlertDialogDescription>

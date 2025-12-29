@@ -8,11 +8,53 @@ import { db } from '@/utils/firebase';
 import toast from 'react-hot-toast';
 
 const timeSlots = {
-  '2024-03-05': [
-    '09:40 AM to 10:30 AM',
-    '10:30 AM to 11:20 AM', 
-    '11:20 AM to 12:10 PM', 
-    '12:10 PM to 01:30 PM'
+  '2026-01-06': [
+    '9:00 AM to 9:30 AM',
+    '9:30 AM to 10:00 AM',
+    '10:00 AM to 10:30 AM',
+    '10:30 AM to 11:00 AM',
+    '11:00 AM to 11:30 AM',
+    '11:30 AM to 12:00 PM',
+    '1:00 PM to 1:30 PM',
+    '1:30 PM to 2:00 PM',
+    '2:00 PM to 2:30 PM',
+    '2:30 PM to 3:00 PM',
+    '3:00 PM to 3:30 PM',
+    '3:30 PM to 4:00 PM',
+    '4:00 PM to 4:30 PM',
+    '4:30 PM to 5:00 PM'
+  ],
+  '2026-01-07': [
+    '9:00 AM to 9:30 AM',
+    '9:30 AM to 10:00 AM',
+    '10:00 AM to 10:30 AM',
+    '10:30 AM to 11:00 AM',
+    '11:00 AM to 11:30 AM',
+    '11:30 AM to 12:00 PM',
+    '1:00 PM to 1:30 PM',
+    '1:30 PM to 2:00 PM',
+    '2:00 PM to 2:30 PM',
+    '2:30 PM to 3:00 PM',
+    '3:00 PM to 3:30 PM',
+    '3:30 PM to 4:00 PM',
+    '4:00 PM to 4:30 PM',
+    '4:30 PM to 5:00 PM'
+  ],
+  '2026-01-08': [
+    '9:00 AM to 9:30 AM',
+    '9:30 AM to 10:00 AM',
+    '10:00 AM to 10:30 AM',
+    '10:30 AM to 11:00 AM',
+    '11:00 AM to 11:30 AM',
+    '11:30 AM to 12:00 PM',
+    '1:00 PM to 1:30 PM',
+    '1:30 PM to 2:00 PM',
+    '2:00 PM to 2:30 PM',
+    '2:30 PM to 3:00 PM',
+    '3:00 PM to 3:30 PM',
+    '3:30 PM to 4:00 PM',
+    '4:00 PM to 4:30 PM',
+    '4:30 PM to 5:00 PM'
   ]
 };
 
@@ -20,11 +62,13 @@ const AutoAllotButton = ({ onComplete }) => {
   const [loading, setLoading] = useState(false);
 
   const findAvailableSlot = (bookedSlots) => {
-    const bookedTimes = new Set(bookedSlots.map(slot => slot.time));
-    
-    for (const time of timeSlots['2024-03-05']) {
-      if (!bookedTimes.has(time)) {
-        return time;
+    const dates = Object.keys(timeSlots);
+    for (const date of dates) {
+      const bookedTimesForDate = new Set(bookedSlots.filter(slot => slot.date === date).map(slot => slot.time));
+      for (const time of timeSlots[date]) {
+        if (!bookedTimesForDate.has(time)) {
+          return { date, time };
+        }
       }
     }
     return null;
@@ -48,7 +92,6 @@ const AutoAllotButton = ({ onComplete }) => {
       const usersSnapshot = await getDocs(usersQuery);
       
       let allotmentCount = 0;
-      const date = '2024-03-05';
 
       for (const userDoc of usersSnapshot.docs) {
         const userData = userDoc.data();
@@ -58,11 +101,11 @@ const AutoAllotButton = ({ onComplete }) => {
         );
         if (existingSlot) continue;
 
-        const availableTime = findAvailableSlot(existingSlots);
-        if (availableTime) {
+        const availableSlot = findAvailableSlot(existingSlots);
+        if (availableSlot) {
           const slotData = {
-            date,
-            time: availableTime,
+            date: availableSlot.date,
+            time: availableSlot.time,
             name: userData.name,
             rollNumber: userData.rollNumber,
             userId: userDoc.id,

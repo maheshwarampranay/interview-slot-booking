@@ -15,16 +15,16 @@ export default function HomePage() {
             className="mb-4" 
           />
           <CardTitle className="text-2xl text-center text-purple-600">
-            Decipher - Slot Booking
+            COSC Recruitments - Interview Slot Booking
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            Welcome to the Decipher slot booking system! 
+            Welcome to the COSC Recruitments interview slot booking system! 
             Use your unique participant link to select your preferred time slot.
           </p>
           <p className="text-center text-sm text-muted-foreground">
-            Event Date: March 5th, 2024 | Venue: CSE Lab 8 & DF Lab
+            Interview Dates: January 6th to 8th, 2026 | Venue: Online
           </p>
           <p className="text-center text-sm text-muted-foreground">
             If you haven&apos;t received your participant link, please contact the COSC team.

@@ -21,14 +21,14 @@ export function ConfirmationModal({
     <AlertDialog open={isOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Your Decipher Slot</AlertDialogTitle>
+          <AlertDialogTitle>Confirm Your Interview Slot</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to book the following slot for the Decipher:
+            Are you sure you want to book the following slot for your interview:
             <div className="mt-2 text-black font-medium">
-              {date} | {time}
+              {new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} | {time}
             </div>
             <div className="mt-2 text-sm text-gray-600">
-              Reminder: You can only attempt the challenge once during this slot.
+              Reminder: you can give your interview only during this slot.
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>

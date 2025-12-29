@@ -7,8 +7,8 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Decipher - Slot Booking',
-  description: 'Slot booking for Decipher by COSC',
+  title: 'COSC Recruitments - Interview Slot Booking',
+  description: 'Interview slot booking for COSC Recruitments',
 };
 
 interface RootLayoutProps {

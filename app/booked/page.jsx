@@ -12,11 +12,23 @@ import * as XLSX from 'xlsx';
 import { Loader2 } from 'lucide-react';
 
 const TIME_SLOTS = [
-  '09:40 AM to 10:30 AM',
-  '10:30 AM to 11:20 AM', 
-  '11:20 AM to 12:10 PM', 
-  '12:10 PM to 01:30 PM'
+  '9:00 AM to 9:30 AM',
+  '9:30 AM to 10:00 AM',
+  '10:00 AM to 10:30 AM',
+  '10:30 AM to 11:00 AM',
+  '11:00 AM to 11:30 AM',
+  '11:30 AM to 12:00 PM',
+  '1:00 PM to 1:30 PM',
+  '1:30 PM to 2:00 PM',
+  '2:00 PM to 2:30 PM',
+  '2:30 PM to 3:00 PM',
+  '3:00 PM to 3:30 PM',
+  '3:30 PM to 4:00 PM',
+  '4:00 PM to 4:30 PM',
+  '4:30 PM to 5:00 PM'
 ];
+
+const DATES = ['2026-01-06', '2026-01-07', '2026-01-08'];
 
 export default function BookedUsersPage() {
   const [bookedUsers, setBookedUsers] = useState({});
@@ -34,15 +46,14 @@ export default function BookedUsersPage() {
   
       slotsSnapshot.forEach(doc => {
         const data = doc.data();
-        const timeSlot = data.time;
+        const slotKey = `${data.date}-${data.time}`;
         
-        if (data.date === '2024-03-05') {
-          if (!groupedUsers[timeSlot]) {
-            groupedUsers[timeSlot] = [];
-          }
-          
-          groupedUsers[timeSlot].push({
-            id: doc.id,
+        if (!groupedUsers[slotKey]) {
+          groupedUsers[slotKey] = [];
+        }
+        
+        groupedUsers[slotKey].push({
+          id: doc.id,
             ...data
           });
         }
@@ -55,19 +66,21 @@ export default function BookedUsersPage() {
       setLoading(false);
     }
   };
-  const handleExport = (timeSlot) => {
-    if (!bookedUsers[timeSlot]) return;
+  const handleExport = (slotKey) => {
+    if (!bookedUsers[slotKey]) return;
   
-    const sanitizedTimeSlot = timeSlot
+    const [date, time] = slotKey.split('-');
+    const sanitizedTimeSlot = time
       .replace(/\s+/g, '_')
       .replace(/:/g, '_')
       .replace(/\./g, '_');
   
-    const exportData = bookedUsers[timeSlot].map((user, index) => ({
+    const exportData = bookedUsers[slotKey].map((user, index) => ({
       'S.No': index + 1,
       'Name': user.name,
       'Roll Number': user.rollNumber,
-      'Time Slot': timeSlot
+      'Date': date,
+      'Time Slot': time
     }));
   
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -90,13 +103,15 @@ export default function BookedUsersPage() {
   };
 
   const handleExportAll = () => {
-    const allExportData = Object.entries(bookedUsers).flatMap(([timeSlot, users]) => 
-      users.map(user => ({
+    const allExportData = Object.entries(bookedUsers).flatMap(([slotKey, users]) => {
+      const [date, time] = slotKey.split('-');
+      return users.map(user => ({
         Name: user.name,
         'Roll Number': user.rollNumber,
-        Time: timeSlot
-      }))
-    );
+        Date: date,
+        Time: time
+      }));
+    });
 
     const ws = XLSX.utils.json_to_sheet(allExportData);
     const wb = XLSX.utils.book_new();
@@ -104,19 +119,20 @@ export default function BookedUsersPage() {
     XLSX.writeFile(wb, 'all_booked_users.xlsx');
   };
 
-  const renderTimeSlotUsers = (timeSlot) => {
-    const users = bookedUsers[timeSlot] || [];
+  const renderTimeSlotUsers = (slotKey) => {
+    const users = bookedUsers[slotKey] || [];
+    const [date, time] = slotKey.split('-');
     return (
-      <Card key={timeSlot} className="mb-4">
+      <Card key={slotKey} className="mb-4">
         <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle>{timeSlot}</CardTitle>
+          <CardTitle>{time}</CardTitle>
           <div className="flex space-x-2">
             <Button 
-              onClick={() => handleExport(timeSlot)}
+              onClick={() => handleExport(slotKey)}
               disabled={users.length === 0}
               className="bg-purple-600 hover:bg-purple-700"
             >
-              Export {timeSlot} Users
+              Export {time} Users
             </Button>
           </div>
         </CardHeader>
@@ -165,7 +181,12 @@ export default function BookedUsersPage() {
         </CardHeader>
       </Card>
 
-      {TIME_SLOTS.map(slot => renderTimeSlotUsers(slot))}
+      {DATES.map(date => (
+        <div key={date} className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">{new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+          {TIME_SLOTS.map(slot => renderTimeSlotUsers(`${date}-${slot}`))}
+        </div>
+      ))}
     </div>
   );
 }
