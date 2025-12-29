@@ -21,7 +21,7 @@ export default function HomePage() {
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
             Welcome to the COSC Recruitments interview slot booking system! 
-            Use your unique participant link to select your preferred time slot.
+            Use your unique link to select your preferred time slot.
           </p>
           <p className="text-center text-sm text-muted-foreground">
             Interview Dates: January 6th to 8th, 2026 | Venue: Online

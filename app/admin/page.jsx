@@ -20,6 +20,17 @@ export default function AdminPage() {
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
+  const [password, setPassword] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (password === 'COSC2526') {
+      setAuthenticated(true);
+    } else {
+      alert('Incorrect password');
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -144,6 +155,24 @@ export default function AdminPage() {
     XLSX.utils.book_append_sheet(wb, ws, 'Candidates');
     XLSX.writeFile(wb, 'candidates_with_links.xlsx');
   };
+
+  if (!authenticated) {
+    return (
+      <div className="container mx-auto p-4 flex items-center justify-center min-h-screen">
+        <form onSubmit={handlePasswordSubmit} className="bg-white p-6 rounded shadow-md">
+          <h1 className="text-2xl font-bold mb-4">Admin Access</h1>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
+            className="border p-2 w-full mb-4"
+          />
+          <button type="submit" className="bg-blue-500 text-white p-2 w-full">Submit</button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
