@@ -316,7 +316,7 @@ export default function SchedulePage() {
             </div>
             <div className="mt-4 sm:mt-6">
               <p className="text-xs sm:text-sm text-gray-600 mb-3">
-                Please arrive at CSE Lab 8 or DF Lab 5 minutes before your slot.
+                The interview link will be sent to you via email 10 minutes before your scheduled interview time.
               </p>
             </div>
           </div>
