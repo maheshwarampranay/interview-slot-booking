@@ -19,7 +19,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className={cn(
-        'min-h-screen bg-background antialiased',
+        'min-h-screen bg-gradient-to-br from-[#373272] to-[#D72087] antialiased',
         inter.className
       )}>
         <div className="relative flex min-h-screen flex-col items-center justify-center">
