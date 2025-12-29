@@ -26,6 +26,17 @@ const TIME_SLOTS = [
 export default function BookedPage() {
   const [bookedUsers, setBookedUsers] = useState({});
   const [loading, setLoading] = useState(true);
+  const [password, setPassword] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (password === 'COSC2526') {
+      setAuthenticated(true);
+    } else {
+      alert('Incorrect password');
+    }
+  };
 
   useEffect(() => {
     const fetchBookedUsers = async () => {
@@ -63,6 +74,24 @@ export default function BookedPage() {
 
     fetchBookedUsers();
   }, []);
+
+  if (!authenticated) {
+    return (
+      <div className="container mx-auto p-4 flex items-center justify-center min-h-screen">
+        <form onSubmit={handlePasswordSubmit} className="bg-white p-6 rounded shadow-md">
+          <h1 className="text-2xl font-bold mb-4">Admin Access</h1>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
+            className="border p-2 w-full mb-4"
+          />
+          <button type="submit" className="bg-blue-500 text-white p-2 w-full">Submit</button>
+        </form>
+      </div>
+    );
+  }
 
   if (loading) {
     return <div>Loading...</div>;
