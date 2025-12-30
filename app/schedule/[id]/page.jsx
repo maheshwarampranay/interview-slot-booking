@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { db } from '@/utils/firebase';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { CalendarIcon, Clock } from 'lucide-react';
+import { CalendarIcon, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import InstructionsModal from '@/components/InstructionsModal';
 import Image from 'next/image';
@@ -63,6 +63,28 @@ export default function SchedulePage() {
   
   const timeSlots = generateTimeSlots();
   const dates = ['2026-01-06', '2026-01-07', '2026-01-08'];
+  const [selectedDate, setSelectedDate] = useState(dates[0]);
+  const [dateIndex, setDateIndex] = useState(0);
+
+  const morningSlots = timeSlots.slice(0, 5);
+  const afternoonSlots = timeSlots.slice(5, 11);
+  const eveningSlots = timeSlots.slice(11);
+
+  const nextDate = () => {
+    if (dateIndex < dates.length - 1) {
+      const newIndex = dateIndex + 1;
+      setDateIndex(newIndex);
+      setSelectedDate(dates[newIndex]);
+    }
+  };
+
+  const prevDate = () => {
+    if (dateIndex > 0) {
+      const newIndex = dateIndex - 1;
+      setDateIndex(newIndex);
+      setSelectedDate(dates[newIndex]);
+    }
+  };
 
   const fetchUserAndBookings = useCallback(async () => {
     try {
@@ -332,11 +354,11 @@ export default function SchedulePage() {
         onClose={() => setShowInstructions(false)} 
       />
 
-      <Card className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 p-2 sm:p-0">
-        <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6">
+      <Card className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 p-2 sm:p-0 min-h-screen flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 sticky top-0 bg-white z-10">
           <div>
             <CardTitle className="text-xl sm:text-2xl text-black">Hey there, {user?.name}! 🎉</CardTitle>
-            <p className="text-sm sm:text-base text-gray-600">Select your interview slot for COSC Recruitments from January 6th to 8th, 2026</p>
+            <p className="text-sm sm:text-base text-gray-600">Select your interview slot for COSC Recruitments</p>
           </div>
           <Image
             src="/cosc.svg"
@@ -346,30 +368,58 @@ export default function SchedulePage() {
             className="object-contain w-12 h-12 sm:w-16 sm:h-16"
           />
         </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          <div className="space-y-6">
+        <CardContent className="p-4 sm:p-6 flex-1 overflow-hidden">
+          <div className="space-y-3 h-full">
             <h3 className="text-base sm:text-lg font-semibold text-black">
-              COSC Recruitments - Interview Slot Selection
+              {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </h3>
             
-            {dates.map(date => (
-              <div key={date} className="space-y-4">
-                <h4 className="text-sm sm:text-base font-medium text-black">
-                  {new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </h4>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h5 className="text-xs sm:text-sm font-medium text-black mb-2">
-                      Available Slots
-                    </h5>
-                    <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
-                      {timeSlots.map(time => renderTimeSlot(time, date))}
-                    </div>
+            <div className="flex items-center justify-center space-x-2 bg-gray-50 p-2 rounded">
+              <Button onClick={prevDate} disabled={dateIndex === 0} className="p-1" variant="ghost">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {dates.map(date => (
+                <Button
+                  key={date}
+                  onClick={() => {
+                    setSelectedDate(date);
+                    setDateIndex(dates.indexOf(date));
+                  }}
+                  className={`px-4 py-2 ${selectedDate === date ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-transparent text-black hover:bg-gray-200'}`}
+                  variant="ghost"
+                >
+                  {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </Button>
+              ))}
+              <Button onClick={nextDate} disabled={dateIndex === dates.length - 1} className="p-1" variant="ghost">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="max-h-[65vh] overflow-y-auto">
+              <div key={selectedDate} className="space-y-4 transition-opacity duration-300">
+                <div>
+                  <h4 className="text-sm font-medium text-left text-black">Morning</h4>
+                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                    {morningSlots.map(time => renderTimeSlot(time, selectedDate))}
+                  </div>
+                </div>
+                <hr className="border-gray-200 opacity-20" />
+                <div>
+                  <h4 className="text-sm font-medium text-left text-black">Afternoon</h4>
+                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                    {afternoonSlots.map(time => renderTimeSlot(time, selectedDate))}
+                  </div>
+                </div>
+                <hr className="border-gray-200 opacity-20" />
+                <div>
+                  <h4 className="text-sm font-medium text-left text-black">Evening</h4>
+                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                    {eveningSlots.map(time => renderTimeSlot(time, selectedDate))}
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </CardContent>
       </Card>
