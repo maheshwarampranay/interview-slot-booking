@@ -86,8 +86,8 @@ export default function AdminPage() {
         const worksheet = workbook.Sheets[sheetName];
         const data = XLSX.utils.sheet_to_json(worksheet);
 
-        if (!data.every(row => row.Name && row['Roll Number'])) {
-          throw new Error('Excel file must contain "Name" and "Roll Number" columns');
+        if (!data.every(row => row.Name && row['Roll Number'] && row.Email)) {
+          throw new Error('Excel file must contain "Name", "Roll Number", and "Email" columns');
         }
 
         const baseUrl = window.location.origin;
@@ -156,6 +156,39 @@ export default function AdminPage() {
     XLSX.writeFile(wb, 'candidates_with_links.xlsx');
   };
 
+  const handleExportSlots = async () => {
+    try {
+      const slotsRef = collection(db, 'slots');
+      const slotsSnap = await getDocs(slotsRef);
+      const slotsData = [];
+      
+      slotsSnap.forEach(doc => {
+        const data = doc.data();
+        slotsData.push({
+          Date: data.date,
+          Time: data.time,
+          Name: data.name,
+          'Roll Number': data.rollNumber,
+          Email: data.email || '',
+          'Booked At': data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : ''
+        });
+      });
+
+      // Sort by date and time
+      slotsData.sort((a, b) => {
+        if (a.Date !== b.Date) return a.Date.localeCompare(b.Date);
+        return a.Time.localeCompare(b.Time);
+      });
+
+      const ws = XLSX.utils.json_to_sheet(slotsData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Booked Slots');
+      XLSX.writeFile(wb, 'booked_slots.xlsx');
+    } catch (error) {
+      setErrorMessage('Failed to export slots data');
+    }
+  };
+
   if (!authenticated) {
     return (
       <div className="container mx-auto p-4 flex items-center justify-center min-h-screen">
@@ -213,7 +246,13 @@ export default function AdminPage() {
                 disabled={users.length === 0 || loading}
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                Export Data
+                Export Candidates
+              </Button>
+              <Button 
+                onClick={handleExportSlots}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Download Slots Excel
               </Button>
             </div>
           </div>

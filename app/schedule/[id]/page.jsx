@@ -219,6 +219,7 @@ export default function SchedulePage() {
           userId: user.id,
           name: user.name,
           rollNumber: user.rollNumber,
+          email: user.email || '',
           date,
           time,
           timestamp: serverTimestamp()
