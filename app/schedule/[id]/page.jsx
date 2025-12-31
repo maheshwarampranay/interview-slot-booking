@@ -263,7 +263,7 @@ export default function SchedulePage() {
         key={slotKey}
         onClick={() => handleSlotSelect(time, date)}
         disabled={isBooked || isSelected || confirmedSlot}
-        className={`p-1.5 sm:p-2 text-xs sm:text-sm whitespace-normal h-auto ${
+        className={`p-1.5 text-xs sm:text-sm whitespace-normal h-auto ${
           isSelected
             ? 'bg-green-500 hover:bg-green-600'
             : isBooked
@@ -354,7 +354,7 @@ export default function SchedulePage() {
         onClose={() => setShowInstructions(false)} 
       />
 
-      <Card className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 p-2 sm:p-0 min-h-screen flex flex-col">
+      <Card className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 p-2 sm:p-0 flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between p-4 sm:p-6 sticky top-0 bg-white z-10">
           <div>
             <CardTitle className="text-xl sm:text-2xl text-black">Hey there, {user?.name}! 🎉</CardTitle>
@@ -368,8 +368,8 @@ export default function SchedulePage() {
             className="object-contain w-12 h-12 sm:w-16 sm:h-16"
           />
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 flex-1 overflow-hidden">
-          <div className="space-y-3 h-full">
+        <CardContent className="p-4 sm:p-6">
+          <div className="space-y-3">
             <h3 className="text-base sm:text-lg font-semibold text-black">
               {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </h3>
@@ -396,25 +396,25 @@ export default function SchedulePage() {
               </Button>
             </div>
             
-            <div className="max-h-[65vh] overflow-y-auto">
-              <div key={selectedDate} className="space-y-4 transition-opacity duration-300">
+            <div className="space-y-3">
+              <div key={selectedDate} className="space-y-3 transition-opacity duration-300">
                 <div>
                   <h4 className="text-sm font-medium text-left text-black">Morning</h4>
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                  <div className="grid grid-cols-5 gap-2 mt-2">
                     {morningSlots.map(time => renderTimeSlot(time, selectedDate))}
                   </div>
                 </div>
                 <hr className="border-gray-200 opacity-20" />
                 <div>
                   <h4 className="text-sm font-medium text-left text-black">Afternoon</h4>
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                  <div className="grid grid-cols-5 gap-2 mt-2">
                     {afternoonSlots.map(time => renderTimeSlot(time, selectedDate))}
                   </div>
                 </div>
                 <hr className="border-gray-200 opacity-20" />
                 <div>
                   <h4 className="text-sm font-medium text-left text-black">Evening</h4>
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mt-2">
+                  <div className="grid grid-cols-5 gap-2 mt-2">
                     {eveningSlots.map(time => renderTimeSlot(time, selectedDate))}
                   </div>
                 </div>
