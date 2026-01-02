@@ -184,9 +184,11 @@ export default function AdminPage() {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Booked Slots');
       XLSX.writeFile(wb, 'booked_slots.xlsx');
-    } catch (error) {
-      setErrorMessage('Failed to export slots data');
-    }
+    } catch (err) {
+  console.error(err);
+  setErrorMessage('Failed to export slots data');
+}
+
   };
 
   if (!authenticated) {
