@@ -330,7 +330,9 @@ export default function SchedulePage() {
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                <span className="text-sm sm:text-base">March 5th, 2024</span>
+                <span className="text-sm sm:text-base">
+                  {new Date(slot.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
@@ -339,7 +341,7 @@ export default function SchedulePage() {
             </div>
             <div className="mt-4 sm:mt-6">
               <p className="text-xs sm:text-sm text-gray-600 mb-3">
-                The interview link will be sent to you via email 10 minutes before your scheduled interview time.
+                The interview link will be sent through whatsapp group on the day of interview.
               </p>
             </div>
           </div>
