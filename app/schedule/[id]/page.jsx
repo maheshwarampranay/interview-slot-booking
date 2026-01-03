@@ -201,28 +201,27 @@ export default function SchedulePage() {
     try {
       const { date, time } = pendingSlot;
       
-      // Run both validation queries in parallel (before transaction)
-      const [userExistingBookings, panelSlotBookings] = await Promise.all([
-        getDocs(query(slotsRef, where('userId', '==', user.id))),
-        getDocs(query(
+      // Create booking in transaction with validation inside to prevent race conditions
+      await runTransaction(db, async (transaction) => {
+        // Check if user already has a booking (inside transaction for atomicity)
+        const userExistingBookings = await getDocs(query(slotsRef, where('userId', '==', user.id)));
+        
+        if (!userExistingBookings.empty) {
+          throw new Error('You already have a booking');
+        }
+        
+        // Check if slot is already booked for this panel (inside transaction)
+        const panelSlotBookings = await getDocs(query(
           slotsRef, 
           where('date', '==', date),
           where('time', '==', time),
           where('panelno', '==', user.panelno)
-        ))
-      ]);
-      
-      // Check results
-      if (!userExistingBookings.empty) {
-        throw new Error('You already have a booking');
-      }
-      
-      if (panelSlotBookings.size >= 1) {
-        throw new Error('This slot is already booked for your panel');
-      }
-      
-      // Now create the booking in a transaction
-      await runTransaction(db, async (transaction) => {
+        ));
+        
+        if (panelSlotBookings.size >= 1) {
+          throw new Error('This slot is already booked for your panel');
+        }
+        
         // Create new booking with panelno
         const newBookingRef = doc(slotsRef);
         transaction.set(newBookingRef, {
