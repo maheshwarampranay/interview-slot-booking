@@ -112,7 +112,12 @@ export default function SchedulePage() {
         });
       }
   
-      const allBookingsQuery = query(bookingsRef, where('date', 'in', dates));
+      // Fetch all bookings for all dates (filtered by this user's panel)
+      const allBookingsQuery = query(
+        bookingsRef, 
+        where('date', 'in', dates),
+        where('panelno', '==', userData.panelno)
+      );
       const bookingsSnap = await getDocs(allBookingsQuery);
       const bookingsData = {};
       
@@ -142,8 +147,17 @@ export default function SchedulePage() {
   }, [id, fetchUserAndBookings]);
 
   useEffect(() => {
+    // Only set up listener if user has panelno loaded
+    if (!user?.panelno) {
+      return;
+    }
+
     const unsubscribe = onSnapshot(
-      query(collection(db, 'slots'), where('date', 'in', dates)),
+      query(
+        collection(db, 'slots'), 
+        where('date', 'in', dates),
+        where('panelno', '==', user.panelno)
+      ),
       (snapshot) => {
         const newBookings = {};
         snapshot.forEach(doc => {
@@ -163,13 +177,14 @@ export default function SchedulePage() {
     );
 
     return () => unsubscribe();
-  }, [id]);
+  }, [user?.panelno, dates]);
 
   const handleSlotSelect = (time, date) => {
     const slotKey = `${date}-${time}`;
     const currentBookings = bookings[slotKey] || [];
-    if (currentBookings.length >= 3) {
-      toast.error('This slot is fully booked');
+    // Each panel can only have 1 booking per slot
+    if (currentBookings.length >= 1) {
+      toast.error('This slot is already booked for your panel');
       return;
     }
 
@@ -186,39 +201,35 @@ export default function SchedulePage() {
     try {
       const { date, time } = pendingSlot;
       
-      await runTransaction(db, async (transaction) => {
-        // More comprehensive checks
-        const existingBookingsQuery = query(
+      // Run both validation queries in parallel (before transaction)
+      const [userExistingBookings, panelSlotBookings] = await Promise.all([
+        getDocs(query(slotsRef, where('userId', '==', user.id))),
+        getDocs(query(
           slotsRef, 
           where('date', '==', date),
-          where('time', '==', time)
-        );
-        const existingBookingsSnap = await getDocs(existingBookingsQuery);
-        
-        // Check if slot is already full (3 bookings)
-        if (existingBookingsSnap.size >= 3) {
-          throw new Error('This slot is now full');
-        }
-  
-        // Check for existing bookings by this user for ANY slot
-        const userExistingBookingQuery = query(
-          slotsRef, 
-          where('userId', '==', user.id),
-          where('date', '==', date)  // Ensure same date
-        );
-        const userExistingBookings = await getDocs(userExistingBookingQuery);
-        
-        // Prevent multiple bookings on the same date
-        if (!userExistingBookings.empty) {
-          throw new Error('You can only book one slot per day');
-        }
-  
-        // Create new booking
+          where('time', '==', time),
+          where('panelno', '==', user.panelno)
+        ))
+      ]);
+      
+      // Check results
+      if (!userExistingBookings.empty) {
+        throw new Error('You already have a booking');
+      }
+      
+      if (panelSlotBookings.size >= 1) {
+        throw new Error('This slot is already booked for your panel');
+      }
+      
+      // Now create the booking in a transaction
+      await runTransaction(db, async (transaction) => {
+        // Create new booking with panelno
         const newBookingRef = doc(slotsRef);
         transaction.set(newBookingRef, {
           userId: user.id,
           name: user.name,
           rollNumber: user.rollNumber,
+          panelno: user.panelno,
           email: user.email || '',
           date,
           time,
@@ -250,12 +261,12 @@ export default function SchedulePage() {
 
   const isSlotBooked = (slotKey) => {
     const currentBookings = bookings[slotKey] || [];
-    return currentBookings.length >= 3;
+    // For this user's panel, a slot is booked if it already has 1 booking
+    return currentBookings.length >= 1;
   };
   function renderTimeSlot(time, date) {
     const slotKey = `${date}-${time}`;
     const currentBookings = bookings[slotKey] || [];
-    const availableSlots = 3 - currentBookings.length;
     const isBooked = isSlotBooked(slotKey);
     const isSelected = selectedSlot?.date === date && selectedSlot?.time === time;
     
@@ -275,7 +286,7 @@ export default function SchedulePage() {
         <div className="flex flex-col items-center">
           <span className="text-xs sm:text-sm">{time}</span>
           <span className="text-[10px] sm:text-xs opacity-80">
-            {availableSlots} slots available
+            {isBooked ? 'Booked' : 'Available'}
           </span>
         </div>
       </Button>

@@ -19,6 +19,7 @@ export default function AdminPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
+  const [panelno, setPanelno] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
   const [password, setPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
@@ -86,8 +87,8 @@ export default function AdminPage() {
         const worksheet = workbook.Sheets[sheetName];
         const data = XLSX.utils.sheet_to_json(worksheet);
 
-        if (!data.every(row => row.Name && row['Roll Number'] && row.Email)) {
-          throw new Error('Excel file must contain "Name", "Roll Number", and "Email" columns');
+        if (!data.every(row => row.name && row.rollno && row.panelno)) {
+          throw new Error('Excel file must contain "name", "rollno", and "panelno" columns');
         }
 
         const baseUrl = window.location.origin;
@@ -95,15 +96,17 @@ export default function AdminPage() {
 
         for (const row of data) {
           const userId = await handleCreateUser({
-            name: row.Name,
-            rollNumber: row['Roll Number'],
-            email: row.Email || '',
+            name: row.name,
+            rollNumber: row.rollno,
+            panelno: row.panelno,
+            email: row.email || '',
           });
 
           results.push({
-            Name: row.Name,
-            'Roll Number': row['Roll Number'],
-            Email: row.Email || '',
+            name: row.name,
+            rollno: row.rollno,
+            panelno: row.panelno,
+            email: row.email || '',
             Link: `${baseUrl}/schedule/${userId}`
           });
         }
@@ -128,6 +131,7 @@ export default function AdminPage() {
       const userId = await handleCreateUser({
         name,
         rollNumber,
+        panelno,
         email: ''
       });
       const link = `${window.location.origin}/schedule/${userId}`;
@@ -136,6 +140,7 @@ export default function AdminPage() {
       
       setName('');
       setRollNumber('');
+      setPanelno('');
       setErrorMessage('');
     } catch (submitError) {
       setErrorMessage(submitError.message);
@@ -144,9 +149,10 @@ export default function AdminPage() {
 
   const handleExport = () => {
     const exportData = users.map(user => ({
-      Name: user.name,
-      'Roll Number': user.rollNumber,
-      Email: user.email || '',
+      name: user.name,
+      rollno: user.rollNumber,
+      panelno: user.panelno,
+      email: user.email || '',
       Link: `${window.location.origin}/schedule/${user.id}`
     }));
 
@@ -165,19 +171,20 @@ export default function AdminPage() {
       slotsSnap.forEach(doc => {
         const data = doc.data();
         slotsData.push({
-          Date: data.date,
-          Time: data.time,
-          Name: data.name,
-          'Roll Number': data.rollNumber,
-          Email: data.email || '',
-          'Booked At': data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : ''
+          date: data.date,
+          time: data.time,
+          panelno: data.panelno,
+          name: data.name,
+          rollno: data.rollNumber,
+          email: data.email || '',
+          'booked_at': data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : ''
         });
       });
 
       // Sort by date and time
       slotsData.sort((a, b) => {
-        if (a.Date !== b.Date) return a.Date.localeCompare(b.Date);
-        return a.Time.localeCompare(b.Time);
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.time.localeCompare(b.time);
       });
 
       const ws = XLSX.utils.json_to_sheet(slotsData);
@@ -292,6 +299,16 @@ export default function AdminPage() {
                 required
               />
             </div>
+            <div>
+              <Label htmlFor="panelno">Panel Number</Label>
+              <Input
+                id="panelno"
+                value={panelno}
+                onChange={(e) => setPanelno(e.target.value)}
+                placeholder="Enter panel number"
+                required
+              />
+            </div>
             <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
               Generate Interview Link
             </Button>
@@ -336,6 +353,7 @@ export default function AdminPage() {
                     <div>
                       <p className="font-medium">{user.name}</p>
                       <p className="text-sm text-gray-600">Roll Number: {user.rollNumber}</p>
+                      <p className="text-sm text-gray-600">Panel Number: {user.panelno}</p>
                       <p className="text-sm text-gray-600">
                         Status: {user.hasScheduled ? 'Scheduled' : 'Pending'}
                       </p>
