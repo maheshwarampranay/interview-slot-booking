@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { 
   collection, 
@@ -62,7 +62,7 @@ export default function SchedulePage() {
   const [loadError, setLoadError] = useState(null);
   
   const timeSlots = generateTimeSlots();
-  const dates = ['2026-01-06', '2026-01-07', '2026-01-08'];
+  const dates = useMemo(() => ['2026-01-06', '2026-01-07', '2026-01-08'], []);
   const [selectedDate, setSelectedDate] = useState(dates[0]);
   const [dateIndex, setDateIndex] = useState(0);
 
@@ -138,7 +138,7 @@ export default function SchedulePage() {
       toast.error('Failed to load schedule data. Please try again.');
       setLoading(false);
     }
-  }, [id]);
+  }, [id, dates]);
 
   useEffect(() => {
     if (id) {
@@ -266,7 +266,6 @@ export default function SchedulePage() {
   };
   function renderTimeSlot(time, date) {
     const slotKey = `${date}-${time}`;
-    const currentBookings = bookings[slotKey] || [];
     const isBooked = isSlotBooked(slotKey);
     const isSelected = selectedSlot?.date === date && selectedSlot?.time === time;
     
