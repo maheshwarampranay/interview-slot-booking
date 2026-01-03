@@ -201,30 +201,32 @@ export default function SchedulePage() {
     try {
       const { date, time } = pendingSlot;
       
-      // Create booking in transaction with validation inside to prevent race conditions
+      // Create unique slot ID: panel + date + time
+      // This makes each slot a unique, ownable resource
+      const slotId = `panel${user.panelno}-${date}-${time.replace(/\s+/g, '-')}`;
+      const slotDocRef = doc(slotsRef, slotId);
+      
+      // Atomic transaction: claim the slot or fail
       await runTransaction(db, async (transaction) => {
-        // Check if user already has a booking (inside transaction for atomicity)
-        const userExistingBookings = await getDocs(query(slotsRef, where('userId', '==', user.id)));
+        // Check if user already has ANY booking
+        const userBookingsQuery = query(slotsRef, where('userId', '==', user.id));
+        const userBookings = await getDocs(userBookingsQuery);
         
-        if (!userExistingBookings.empty) {
+        if (!userBookings.empty) {
           throw new Error('You already have a booking');
         }
         
-        // Check if slot is already booked for this panel (inside transaction)
-        const panelSlotBookings = await getDocs(query(
-          slotsRef, 
-          where('date', '==', date),
-          where('time', '==', time),
-          where('panelno', '==', user.panelno)
-        ));
+        // Try to read the slot document
+        const slotDoc = await transaction.get(slotDocRef);
         
-        if (panelSlotBookings.size >= 1) {
+        // If slot already exists, it's taken - fail immediately
+        if (slotDoc.exists()) {
           throw new Error('This slot is already booked for your panel');
         }
         
-        // Create new booking with panelno
-        const newBookingRef = doc(slotsRef);
-        transaction.set(newBookingRef, {
+        // Claim the slot by creating it atomically
+        // Only one transaction can succeed in creating this document
+        transaction.set(slotDocRef, {
           userId: user.id,
           name: user.name,
           rollNumber: user.rollNumber,
