@@ -62,7 +62,7 @@ export default function SchedulePage() {
   const [loadError, setLoadError] = useState(null);
   
   const timeSlots = generateTimeSlots();
-  const dates = useMemo(() => ['2026-01-06', '2026-01-07', '2026-01-08'], []);
+  const dates = useMemo(() => ['2026-01-07', '2026-01-08', '2026-01-09'], []);
   const [selectedDate, setSelectedDate] = useState(dates[0]);
   const [dateIndex, setDateIndex] = useState(0);
 
@@ -275,7 +275,7 @@ export default function SchedulePage() {
         key={slotKey}
         onClick={() => handleSlotSelect(time, date)}
         disabled={isBooked || isSelected || confirmedSlot}
-        className={`p-1.5 text-xs sm:text-sm whitespace-normal h-auto ${
+        className={`w-full p-2 sm:p-2.5 text-[11px] sm:text-sm whitespace-normal h-auto ${
           isSelected
             ? 'bg-green-500 hover:bg-green-600'
             : isBooked
@@ -284,7 +284,7 @@ export default function SchedulePage() {
         }`}
       >
         <div className="flex flex-col items-center">
-          <span className="text-xs sm:text-sm">{time}</span>
+          <span className="text-[11px] sm:text-sm leading-tight text-center">{time}</span>
           <span className="text-[10px] sm:text-xs opacity-80">
             {isBooked ? 'Booked' : 'Available'}
           </span>
@@ -388,47 +388,51 @@ export default function SchedulePage() {
               {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </h3>
             
-            <div className="flex items-center justify-center space-x-2 bg-gray-50 p-2 rounded">
-              <Button onClick={prevDate} disabled={dateIndex === 0} className="p-1" variant="ghost">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              {dates.map(date => (
-                <Button
-                  key={date}
-                  onClick={() => {
-                    setSelectedDate(date);
-                    setDateIndex(dates.indexOf(date));
-                  }}
-                  className={`px-4 py-2 ${selectedDate === date ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-transparent text-black hover:bg-gray-200'}`}
-                  variant="ghost"
-                >
-                  {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            <div className="bg-gray-50 p-2 rounded">
+              <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+                <Button onClick={prevDate} disabled={dateIndex === 0} className="p-1 shrink-0" variant="ghost">
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
-              ))}
-              <Button onClick={nextDate} disabled={dateIndex === dates.length - 1} className="p-1" variant="ghost">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+                <div className="flex items-center gap-2">
+                  {dates.map(date => (
+                    <Button
+                      key={date}
+                      onClick={() => {
+                        setSelectedDate(date);
+                        setDateIndex(dates.indexOf(date));
+                      }}
+                      className={`px-3 py-2 text-sm sm:text-base ${selectedDate === date ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-transparent text-black hover:bg-gray-200'}`}
+                      variant="ghost"
+                    >
+                      {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </Button>
+                  ))}
+                </div>
+                <Button onClick={nextDate} disabled={dateIndex === dates.length - 1} className="p-1 shrink-0" variant="ghost">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             
             <div className="space-y-3">
               <div key={selectedDate} className="space-y-3 transition-opacity duration-300">
                 <div>
                   <h4 className="text-sm font-medium text-left text-black">Morning</h4>
-                  <div className="grid grid-cols-5 gap-2 mt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 mt-2">
                     {morningSlots.map(time => renderTimeSlot(time, selectedDate))}
                   </div>
                 </div>
                 <hr className="border-gray-200 opacity-20" />
                 <div>
                   <h4 className="text-sm font-medium text-left text-black">Afternoon</h4>
-                  <div className="grid grid-cols-5 gap-2 mt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 mt-2">
                     {afternoonSlots.map(time => renderTimeSlot(time, selectedDate))}
                   </div>
                 </div>
                 <hr className="border-gray-200 opacity-20" />
                 <div>
                   <h4 className="text-sm font-medium text-left text-black">Evening</h4>
-                  <div className="grid grid-cols-5 gap-2 mt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 mt-2">
                     {eveningSlots.map(time => renderTimeSlot(time, selectedDate))}
                   </div>
                 </div>
