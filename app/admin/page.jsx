@@ -26,7 +26,7 @@ export default function AdminPage() {
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-    if (password === 'COSC2526') {
+    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       setAuthenticated(true);
     } else {
       alert('Incorrect password');
